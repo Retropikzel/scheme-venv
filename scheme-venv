@@ -1,0 +1,192 @@
+#!/bin/sh
+
+# vi: ft=bash
+
+stringContain() { case $2 in *$1* ) return 0;; *) return 1;; esac ;}
+
+supported_rnrs="r6rs r7rs"
+supported_implementations="chezscheme chibi"
+
+## Make sure all arguments are right
+if [ "${1}" = "" ]; then
+    echo "Give implementation name as first argument: ${supported_implementations}"
+    exit 1
+fi
+
+if stringContain "${1}" "${supported_implementations}"; then
+    sleep 0
+else
+      echo "Unsupported implementation: ${1}"
+      exit 1
+fi
+
+if [ "${2}" = "" ]; then
+    echo "Give the RnRS as the second argument: ${supported_rnrs}"
+    exit 1
+fi
+
+if stringContain "${2}" "${supported_rnrs}"; then
+    sleep 0
+else
+      echo "Unsupported RnRS: ${2}"
+      exit 1
+fi
+
+if [ "${3}" = "" ]; then
+    echo "Give path for new virtual environment as third argument"
+    exit 1
+fi
+
+if [ -d "${3}" ]; then
+    echo "Path already exists"
+    exit 1
+fi
+
+## Build variables
+implementation="${1}"
+rnrs="${2}"
+venvpath=$(realpath "${3}")
+schemebinpath="${venvpath}/bin/scheme"
+scheme_path="${venvpath}/bin"
+scheme_compile_cmd=""
+scheme_cmd=""
+scheme_script_cmd=""
+scheme_type="interpreter"
+
+## Create venv directories
+mkdir "${venvpath}"
+mkdir "${venvpath}/bin"
+mkdir "${venvpath}/lib"
+
+## Set scheme type
+case "${implementation}" in
+    "chezscheme") scheme_type=interpreter ;;
+    "chibi") scheme_type=interpreter ;;
+esac
+
+## bin/snow-chibi
+{
+cat << EOF
+#!/bin/sh
+if [ "\${1}" = "install" ]; then
+    shift
+    snow-chibi install \
+        --impls=${implementation} \
+        --install-source-dir=${venvpath}/lib \
+        --install-library-dir=${venvpath}/lib \
+        --install-data-dir=${venvpath}/lib \
+        "\$@"
+else
+    snow-chibi "\$@"
+fi
+EOF
+} > "${venvpath}/bin/snow-chibi"
+chmod +x "${venvpath}/bin/snow-chibi"
+
+## bin/akku
+{
+cat << EOF
+#!/bin/sh
+cd ${venvpath}
+exec akku \"\$@\"
+EOF
+} > "${venvpath}/bin/akku"
+chmod +x "${venvpath}/bin/akku"
+
+## bin/activate
+{
+cat << EOF
+deactivate () {
+    unset SCHEME
+    unset COMPILE_R7RS
+    unset COMPILE_SCHEME
+    unset TEST_SCHEME
+    unset venvname
+    export PS1="\${SCHEME_VENV_OLD_PS1}"
+    unset SCHEME_VENV_OLD_PS1
+    export PATH="\${SCHEME_VENV_OLD_PATH}"
+    unset SCHEME_VENV_OLD_PATH
+    #hash -r 2> /dev/null
+}
+
+export COMPILE_R7RS=${implementation}
+export COMPILE_SCHEME=${implementation}
+export TEST_SCHEME=${implementation}
+export SCHEME=${implementation}
+
+venvname=\$(basename "${venvpath}")
+
+export SCHEME_VENV_OLD_PS1="\${PS1}"
+export PS1="(\${venvname}) \${PS1:-}"
+
+export SCHEME_VENV_OLD_PATH="\${PATH}"
+export PATH="${venvpath}/bin:\${PATH}"
+#hash -r 2> /dev/null
+echo "${implementation} ${rnrs}"
+EOF
+} > "${venvpath}/bin/activate"
+chmod +x "${venvpath}/bin/activate"
+
+## Set scheme commands
+
+if [ "${rnrs}" = "r6rs" ]; then
+## R6RS
+    case "${implementation}" in
+          "chezscheme")
+            if command -v chezscheme >/dev/null 2>&1
+            then
+                scheme_path="${scheme_path}/chezscheme"
+                scheme_cmd="exec chezscheme --libdirs \"${venvpath}/lib\" \"\$@\""
+                scheme_script_cmd="exec chezscheme --libdirs ${venvpath}/lib --program \"\${1}\""
+            else
+                scheme_path="${scheme_path}/scheme"
+                scheme_cmd="exec scheme \"\$@\""
+                scheme_cmd="exec scheme --libdirs \"${venvpath}/lib\" \"\$@\""
+                scheme_script_cmd="exec scheme --libdirs ${venvpath}/lib --program \"\${1}\""
+            fi
+            ;;
+          *)
+            >&2 echo "Unsupported implementation RnRS combination: ${implementation} ${rnrs}"
+            exit 1
+            ;;
+    esac
+    echo "${scheme_script_cmd}" > "${venvpath}/bin/scheme-r6rs"
+else
+## R7RS
+    case "${implementation}" in
+          "chibi")
+            scheme_path="${scheme_path}/chibi-scheme"
+            scheme_cmd="exec chibi-scheme -I \"${venvpath}/lib\" \"\$@\""
+            scheme_script_cmd="exec chibi-scheme -I \"${venvpath}/lib\" \"\${1}\""
+            ;;
+          *)
+            >&2 echo "Unsupported implementation RnRS combination: ${implementation} ${rnrs}"
+            exit 1
+            ;;
+    esac
+    echo "${scheme_script_cmd}" > "${venvpath}/bin/scheme-r7rs"
+fi
+
+## bin/implementation script
+{
+    echo "#!/bin/sh"
+    echo "${scheme_cmd}"
+} > "${scheme_path}"
+chmod +x "${scheme_path}"
+
+## bin/scheme-script
+{
+    echo "#!/bin/sh"
+    echo "if [ \"\${1}\" = \"\" ]; then echo 'scheme-venv (${implementation} ${rnrs}) Give script file as argument' && exit 1; fi"
+    echo "if [ \"\${1}\" = \"--help\" ]; then echo 'scheme-venv (${implementation} ${rnrs}) Give script file as argument' && exit 1; fi"
+    echo "${scheme_script_cmd}"
+} > "${venvpath}/bin/scheme-script"
+chmod +x "${venvpath}/bin/scheme-script"
+
+## bin/compile-r7rs
+{
+    echo "#!/bin/sh"
+    echo "${scheme_compile_cmd}"
+} > "${venvpath}/bin/compile-r7rs"
+chmod +x "${venvpath}/bin/compile-r7rs"
+
