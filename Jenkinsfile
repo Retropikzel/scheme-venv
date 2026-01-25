@@ -29,7 +29,7 @@ pipeline {
                     params.R6RS_SCHEMES.split().each { SCHEME ->
                         stage("${SCHEME}") {
                             catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
-                                sh "make SCHEME=${SCHEME} RNRS=r6rs test-docker"
+                                sh "make SCHEME=${SCHEME} test-r6rs-docker"
                             }
                         }
                     }
@@ -42,7 +42,7 @@ pipeline {
                     params.R7RS_SCHEMES.split().each { SCHEME ->
                         stage("${SCHEME}") {
                             catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
-                                sh "make SCHEME=${SCHEME} RNRS=r7rs test-docker"
+                                sh "make SCHEME=${SCHEME} test-r7rs-docker"
                             }
                         }
                     }
