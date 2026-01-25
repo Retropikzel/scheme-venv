@@ -18,12 +18,6 @@ pipeline {
     }
 
     stages {
-        stage('Init') {
-            steps {
-                sh "apt-get update && apt-get install -y make docker.io"
-                sh "make build-docker-test-image"
-            }
-        }
         stage('R6RS') {
             steps {
                 script {
