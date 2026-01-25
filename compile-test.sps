@@ -4,6 +4,6 @@
         (retropikzel hello)
         (srfi :64))
 
-(display "Interpreter test: ")
+(display "Compile test: ")
 (hello)
 (exit 0)
