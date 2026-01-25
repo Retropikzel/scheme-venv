@@ -24,38 +24,31 @@ pipeline {
                 sh "make build-docker-test-image"
             }
         }
-
-        stage('Tests') {
-            parallel {
-                stage('R6RS') {
-                    steps {
-                        script {
-                            params.R6RS_SCHEMES.split().each { SCHEME ->
-                                stage("${SCHEME}") {
-                                    catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
-                                        sh "timeout 60 make SCHEME=${SCHEME} RNRS=r6rs test-docker"
-                                    }
-                                }
+        stage('R6RS') {
+            steps {
+                script {
+                    params.R6RS_SCHEMES.split().each { SCHEME ->
+                        stage("${SCHEME}") {
+                            catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
+                                sh "timeout 60 make SCHEME=${SCHEME} RNRS=r6rs test-docker"
                             }
                         }
                     }
                 }
-                stage('R7RS') {
-                    steps {
-                        script {
-                            params.R7RS_SCHEMES.split().each { SCHEME ->
-                                stage("${SCHEME}") {
-                                    catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
-                                        sh "timeout 60 make SCHEME=${SCHEME} RNRS=r7rs test-docker"
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-
             }
         }
-
+        stage('R7RS') {
+            steps {
+                script {
+                    params.R7RS_SCHEMES.split().each { SCHEME ->
+                        stage("${SCHEME}") {
+                            catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
+                                sh "timeout 60 make SCHEME=${SCHEME} RNRS=r7rs test-docker"
+                            }
+                        }
+                    }
+                }
+            }
+        }
     }
 }
