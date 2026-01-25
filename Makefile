@@ -33,10 +33,10 @@ build-test-docker-image:
 	fi
 
 test-r6rs-docker: build-test-docker-image
-	@docker run -it scheme-venv-test-${SCHEME} bash -c "make SCHEME=${SCHEME} test-r6rs"
+	@docker run scheme-venv-test-${SCHEME} bash -c "make SCHEME=${SCHEME} test-r6rs"
 
 test-r7rs-docker: build-test-docker-image
-	@docker run -it scheme-venv-test-${SCHEME} bash -c "make SCHEME=${SCHEME} test-r7rs"
+	@docker run scheme-venv-test-${SCHEME} bash -c "make SCHEME=${SCHEME} test-r7rs"
 
 install:
 	@mkdir -p ${PREFIX}/bin
