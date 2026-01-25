@@ -268,7 +268,7 @@ else
             scheme_cmd="stklos -I \"${venvpath}/lib\" \"\${IF}\""
             ;;
           "tr7")
-            scheme_cmd="TR7_LIB_PATH=\"${venvpath}/lib\" tr7i -1 \"\${IF}\""
+            scheme_cmd="TR7_LIB_PATH=\"${venvpath}/lib\:\${TR7_LIB_PATH}\" tr7i -1 \"\${IF}\""
             ;;
           "ypsilon")
             scheme_cmd="ypsilon --r7rs --sitelib \"${venvpath}/lib\" --top-level-program \"\${IF}\""
