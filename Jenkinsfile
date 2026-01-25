@@ -1,0 +1,61 @@
+pipeline {
+    agent {
+        docker {
+            image 'debian'
+            label 'docker-x86_64'
+            args '--user=root --privileged -v /var/run/docker.sock:/var/run/docker.sock'
+        }
+    }
+
+    options {
+        disableConcurrentBuilds()
+        buildDiscarder(logRotator(numToKeepStr: '10', artifactNumToKeepStr: '10'))
+    }
+
+    parameters {
+        string(name: 'R6RS_SCHEMES', defaultValue: 'chezscheme', description: '')
+        string(name: 'R7RS_SCHEMES', defaultValue: 'chibi', description: '')
+    }
+
+    stages {
+        stage('Init') {
+            steps {
+                sh "apt-get update && apt-get install -y make docker.io"
+                sh "make build-docker-test-image"
+            }
+        }
+
+        stage('Tests') {
+            parallel {
+                stage('R6RS') {
+                    steps {
+                        script {
+                            params.R6RS_SCHEMES.split().each { SCHEME ->
+                                stage("${SCHEME}") {
+                                    catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
+                                        sh "timeout 60 make SCHEME=${SCHEME} RNRS=r6rs test-docker"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+                stage('R7RS') {
+                    steps {
+                        script {
+                            params.R7RS_SCHEMES.split().each { SCHEME ->
+                                stage("${SCHEME}") {
+                                    catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
+                                        sh "timeout 60 make SCHEME=${SCHEME} RNRS=r7rs test-docker"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+
+            }
+        }
+
+    }
+}
