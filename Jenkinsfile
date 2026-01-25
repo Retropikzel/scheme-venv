@@ -14,7 +14,7 @@ pipeline {
 
     parameters {
         string(name: 'R6RS_SCHEMES', defaultValue: 'chezscheme', description: '')
-        string(name: 'R7RS_SCHEMES', defaultValue: 'chibi', description: '')
+        string(name: 'R7RS_SCHEMES', defaultValue: 'chibi gauche', description: '')
     }
 
     stages {

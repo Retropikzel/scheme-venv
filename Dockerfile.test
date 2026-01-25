@@ -1,12 +1,14 @@
 ARG SCHEME=chibi
 FROM docker.io/debian:trixie AS build
 RUN apt-get update && apt-get install -y \
-    build-essential chezscheme git ca-certificates wget
+    build-essential git ca-certificates wget libncurses-dev libx11-dev
 WORKDIR /build
-RUN git clone https://github.com/ashinn/chibi-scheme.git --depth=1
-WORKDIR /build/chibi-scheme
-RUN make PREFIX=/root/.local
-RUN make PREFIX=/root/.local install
+RUN wget https://github.com/cisco/ChezScheme/releases/download/v10.3.0/csv10.3.0.tar.gz && tar -xf csv10.3.0.tar.gz
+WORKDIR /build/csv10.3.0
+RUN ./configure --prefix=/root/local
+RUN make
+RUN make install
+RUN apt-get install -y guile-3.0
 WORKDIR /build
 RUN wget https://gitlab.com/-/project/6808260/uploads/9d23bb6ec47dd2d7ee41802115cd7d80/akku-1.1.0.src.tar.xz && tar -xf akku-1.1.0.src.tar.xz
 WORKDIR /build/akku-1.1.0.src
@@ -14,14 +16,21 @@ RUN ./install.sh
 WORKDIR /build
 RUN wget https://ftp.gnu.org/gnu/make/make-4.4.tar.gz && tar -xf make-4.4.tar.gz
 WORKDIR /build/make-4.4
+ENV PATH=/root/.local:${PATH}
 RUN ./configure --prefix=/root/.local
 RUN make
 run make install
+WORKDIR /build
+RUN git clone https://github.com/ashinn/chibi-scheme.git --depth=1
+WORKDIR /build/chibi-scheme
+RUN make PREFIX=/root/.local
+RUN make PREFIX=/root/.local install
 
 ARG SCHEME=chibi
 FROM docker.io/schemers/${SCHEME}:head
 COPY --from=build /root/.local /root/.local
 ENV PATH=/root/.local/bin:${PATH}
+ENV LD_LIBRARY_PATH=/root/.local/lib
 WORKDIR /workdir
 COPY Makefile Makefile
 COPY test.scm test.scm
