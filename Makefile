@@ -14,11 +14,9 @@ test:
 		&& ./testvenv/bin/akku install akku-r7rs \
 		&& ./testvenv/bin/scheme-script test.scm
 
-build-docker-test-image:
-	docker build --build-arg SCHEME=${SCHEME} -f Dockerfile.test --tag=scheme-venv-test .
-
-test-docker: build-docker-test-image
-	docker run -t scheme-venv-test bash -c "make SCHEME=${SCHEME} RNRS=${RNRS} test"
+test-docker:
+	docker build --build-arg SCHEME=${SCHEME} -f Dockerfile.test --tag=scheme-venv-test-${SCHEME} .
+	docker run -t scheme-venv-test-${SCHEME} bash -c "make SCHEME=${SCHEME} RNRS=${RNRS} test"
 
 install:
 	mkdir -p ${PREFIX}/bin
