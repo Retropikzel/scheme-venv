@@ -1,26 +1,13 @@
 #!/bin/sh
 
-# TODO:
-# Capyscheme
-# Cyclone
-# Ikarus
-# Ironscheme
-# Larceny
-# Meevax
-# MIT-Scheme
-# Mosh
-# Sagittarius
-# Skint
-# Vicare
-# Ypsilon
-
 # vi: ft=bash
 
 stringContain() { case $2 in *$1* ) return 0;; *) return 1;; esac ;}
 
 supported_rnrs="r6rs r7rs"
-supported_implementations="chezscheme chibi chicken foment gambit gauche kawa \
-    loko mit-scheme racket stklos tr7"
+supported_implementations="capyscheme chezscheme chibi chicken cyclone foment \
+    gambit gauche guile ikarus ironscheme kawa larceny loko meevax mosh \
+    mit-scheme racket sagittarius skint stklos tr7 ypsilon"
 
 ## Make sure all arguments are right
 if [ "${1}" = "" ]; then
@@ -163,6 +150,7 @@ export SCHEME_VENV_OLD_PATH="\${PATH}"
 export PATH="${venvpath}/bin:\${PATH}"
 hash -r 2> /dev/null
 echo "${implementation} ${rnrs}"
+echo "if [ "${rnrs}" = "r6rs" ]; then . ${venvpath}/lib/.akku/bin/activate; fi"
 EOF
 } > "${venvpath}/bin/activate"
 chmod +x "${venvpath}/bin/activate"
@@ -172,6 +160,9 @@ chmod +x "${venvpath}/bin/activate"
 if [ "${rnrs}" = "r6rs" ]; then
 ## R6RS
     case "${implementation}" in
+          "capyscheme")
+            scheme_cmd="capy --r6rs -L \"${venvpath}/lib\" --script=\"\${IF}\""
+            ;;
           "chezscheme")
             if command -v chezscheme >/dev/null 2>&1
             then
@@ -180,12 +171,33 @@ if [ "${rnrs}" = "r6rs" ]; then
                 scheme_cmd="scheme --libdirs \"${venvpath}/lib/.akku/lib\" --program \"\${IF}\""
             fi
             ;;
+          "guile")
+            scheme_cmd="guile --r6rs -L \"${venvpath}/lib/.akku/lib\" \"\${IF}\""
+            ;;
+          "ikarus")
+            scheme_cmd="IKARUS_LIBRARY_PATH=\"${venvpath}/lib/.akku/lib\" ikarus --r6rs-script \"\${IF}\""
+            ;;
+          "ironscheme")
+            scheme_cmd="ironscheme -I \"${venvpath}/lib/.akku/lib\" \"\${IF}\""
+            ;;
+          "larceny")
+            scheme_cmd="larceny -nobanner -quiet -utf8 -r6 -I \"${venvpath}/lib/.akku/lib\" \"\${IF}\""
+            ;;
           "loko")
-            scheme_cmd="LOKO_LIBRARY_PATH=\"${venvpath}/lib\" loko -std=r6rs --program \"\${IF}\""
-            scheme_compile_cmd="LOKO_LIBRARY_PATH=\"${venvpath}/lib\" loko -std=r6rs -o \"\${OF}\" --compile \"\${IF}\""
+            scheme_cmd="LOKO_LIBRARY_PATH=\"${venvpath}/lib/.akku/lib\" loko --program \"\${IF}\""
+            scheme_compile_cmd="LOKO_LIBRARY_PATH=\"${venvpath}/lib/.akku/lib\" loko -o \"\${OF}\" --compile \"\${IF}\""
+            ;;
+          "mosh")
+            scheme_cmd="mosh --loadpath=\"${venvpath}/lib/.akku/lib\" \"\${IF}\""
             ;;
           "racket")
-            scheme_cmd="racket -I scheme/init -l r6rs/run.rkt -S \"${venvpath}/lib\" \"\${IF}\""
+            scheme_cmd="racket -I scheme/init -l r6rs/run.rkt -S \"${venvpath}/lib/.akku/lib\" \"\${IF}\""
+            ;;
+          "sagittarius")
+            scheme_cmd="sash -r6 -L \"${venvpath}/lib\" \"\${IF}\""
+            ;;
+          "ypsilon")
+            scheme_cmd="ypsilon --r6rs --sitelib \"${venvpath}/lib\" --top-level-program \"\${IF}\""
             ;;
           *)
             >&2 echo "Unsupported implementation RnRS combination: ${implementation} ${rnrs}"
@@ -196,12 +208,19 @@ if [ "${rnrs}" = "r6rs" ]; then
 else
 ## R7RS
     case "${implementation}" in
+          "capyscheme")
+            scheme_cmd="capy --r7rs -L \"${venvpath}/lib\" --script=\"\${IF}\""
+            ;;
           "chibi")
             scheme_cmd="chibi-scheme -I \"${venvpath}/lib\" \"\${IF}\""
             ;;
           "chicken")
             scheme_cmd="echo \"Chicken scripts not yet supported\" && exit 1"
             scheme_compile_cmd="csc -static -X r7rs -R r7rs -o \"\${OF}\" \"\${IF}\""
+            ;;
+          "cyclone")
+            scheme_cmd="icyc -I \"${venvpath}/lib\" \"\${IF}\""
+            scheme_compile_cmd="cyclone -I \"${venvpath}/lib\" \"\${IF}\""
             ;;
           "foment")
             scheme_cmd="foment -I \"${venvpath}/lib\" \"\${IF}\""
@@ -214,24 +233,45 @@ else
           "gauche")
             scheme_cmd="gosh -r7 -I \"${venvpath}/lib\" \"\${IF}\""
             ;;
+          "guile")
+            scheme_cmd="guile --r7rs -C \"${venvpath}/lib\" -L \"${venvpath}/lib\" \"\${IF}\""
+            ;;
           "kawa")
             scheme_cmd="kawa --r7rs --full-tailcalls -Dkawa.import.path=\"${venvpath}/lib/*.sld\" \"\${IF}\""
+            ;;
+          "larceny")
+            scheme_cmd="larceny -nobanner -quiet -utf8 -r7 -I \"${venvpath}/lib\" \"\${IF}\""
             ;;
           "loko")
             scheme_cmd="LOKO_LIBRARY_PATH=\"${venvpath}/lib\" loko -std=r7rs --program \"\${IF}\""
             scheme_compile_cmd="LOKO_LIBRARY_PATH=\"${venvpath}/lib\" loko -std=r7rs -o \"\${OF}\" --compile \"\${IF}\""
             ;;
+          "meevax")
+            scheme_cmd="meevax -I \"${venvpath}/lib\" \"\${IF}\""
+            ;;
           "mit-scheme")
             scheme_cmd="mit-scheme --prepend-library ${venvpath}/lib --batch-mode --load \"\${IF}\" --eval \"(exit 0)\" --args"
             ;;
+          "mosh")
+            scheme_cmd="mosh --loadpath=\"${venvpath}/lib\" \"\${IF}\""
+            ;;
           "racket")
             scheme_cmd="racket -I r7rs -S \"${venvpath}/lib\" --script \"\${IF}\""
+            ;;
+          "sagittarius")
+            scheme_cmd="sash -r7 -L \"${venvpath}/lib\" \"\${IF}\""
+            ;;
+          "skint")
+            scheme_cmd="skint -I \"${venvpath}/lib\" \"\${IF}\""
             ;;
           "stklos")
             scheme_cmd="stklos -I \"${venvpath}/lib\" \"\${IF}\""
             ;;
           "tr7")
             scheme_cmd="TR7_LIB_PATH=\"${venvpath}/lib\" tr7i -1 \"\${IF}\""
+            ;;
+          "ypsilon")
+            scheme_cmd="ypsilon --r7rs --sitelib \"${venvpath}/lib\" --top-level-program \"\${IF}\""
             ;;
           *)
             >&2 echo "Unsupported implementation RnRS combination: ${implementation} ${rnrs}"
@@ -256,16 +296,20 @@ chmod +x "${venvpath}/bin/scheme-script"
 if [ "${scheme_type}" = "interpreter" ]; then
     {
         echo "#!/bin/sh"
-        echo "printf \"\n#|\nexec ${venvpath}/bin/scheme-script \\\"\\\${0}\\\" \\\"\\\$@\\\"\n|#\n\" > \"\${1%.scm}\""
-        echo "cat \"\${1}\" >> \"\${1%.scm}\""
-        echo "chmod +x \"\${1%.scm}\""
+        echo "if [ \"\${SCHEME_VENV_DEBUG}\" = "1" ]; then set -x; fi"
+        echo "IF=\"\$(realpath \"\${1}\")\""
+        echo "if [ "${rnrs}" = "r6rs" ]; then OF=\"\${IF%.sps}\"; else OF=\"\${IF%.scm}\"; fi"
+        echo "printf \"\n#|\nexec ${venvpath}/bin/scheme-script \\\"\\\${0}\\\" \\\"\\\$@\\\"\n|#\n\" > \"\${OF}\""
+        echo "cat \"\${IF}\" >> \"\${OF}\""
+        echo "chmod +x \"\${OF}\""
     } > "${venvpath}/bin/scheme-compile"
     chmod +x "${venvpath}/bin/scheme-compile"
 else
     {
         echo "#!/bin/sh"
+        echo "if [ \"\${SCHEME_VENV_DEBUG}\" = "1" ]; then set -x; fi"
         echo "IF=\$(realpath \"\${1}\")"
-        echo "OF=\${IF%.scm}"
+        echo "if [ "${rnrs}" = "r6rs" ]; then OF=\"\${IF%.sps}\"; else OF=\"\${IF%.scm}\"; fi"
         echo "cd ${venvpath}/lib"
         echo "${scheme_compile_cmd}"
     } > "${venvpath}/bin/scheme-compile"

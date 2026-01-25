@@ -13,8 +13,8 @@ pipeline {
     }
 
     parameters {
-        string(name: 'R6RS_SCHEMES', defaultValue: 'chezscheme', description: '')
-        string(name: 'R7RS_SCHEMES', defaultValue: 'chibi gauche', description: '')
+        string(name: 'R6RS_SCHEMES', defaultValue: 'capyscheme chezscheme guile ikarus ironscheme larceny loko mosh racket sagittarius ypsilon', description: '')
+        string(name: 'R7RS_SCHEMES', defaultValue: 'capyscheme chibi chicken cyclone foment gambit gauche guile kawa larceny loko meevax mosh mit-scheme racket sagittarius skint stklos tr7 ypsilon', description: '')
     }
 
     stages {
@@ -30,7 +30,7 @@ pipeline {
                     params.R6RS_SCHEMES.split().each { SCHEME ->
                         stage("${SCHEME}") {
                             catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
-                                sh "timeout 60 make SCHEME=${SCHEME} RNRS=r6rs test-docker"
+                                sh "make SCHEME=${SCHEME} RNRS=r6rs test-docker"
                             }
                         }
                     }
@@ -43,7 +43,7 @@ pipeline {
                     params.R7RS_SCHEMES.split().each { SCHEME ->
                         stage("${SCHEME}") {
                             catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
-                                sh "timeout 60 make SCHEME=${SCHEME} RNRS=r7rs test-docker"
+                                sh "make SCHEME=${SCHEME} RNRS=r7rs test-docker"
                             }
                         }
                     }
