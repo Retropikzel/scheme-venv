@@ -11,7 +11,7 @@ test-r6rs-script:
 	@rm -rf testvenv/ \
 		&& ./scheme-venv ${SCHEME} r6rs testvenv \
 		&& ./testvenv/bin/snow-chibi install --always-yes retropikzel.hello \
-		&& ./testvenv/bin/akku install akku-r7rs \
+		&& ./testvenv/bin/akku install chez-srfi \
 		&& SCHEME_VENV_DEBUG=1 ./testvenv/bin/scheme-script test.sps
 
 test-r6rs-compile:
@@ -19,7 +19,7 @@ test-r6rs-compile:
 	@rm -rf testvenv/ \
 		&& ./scheme-venv ${SCHEME} r6rs testvenv \
 		&& ./testvenv/bin/snow-chibi install --always-yes retropikzel.hello \
-		&& ./testvenv/bin/akku install akku-r7rs \
+		&& ./testvenv/bin/akku install chez-srfi \
 		&& SCHEME_VENV_DEBUG=1 ./testvenv/bin/scheme-compile compile-test.sps \
 		&& ./compile-test
 
