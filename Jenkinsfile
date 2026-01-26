@@ -1,7 +1,7 @@
 pipeline {
     agent {
         docker {
-            image 'debian'
+            image 'alpine'
             label 'docker-x86_64'
             args '--user=root --privileged -v /var/run/docker.sock:/var/run/docker.sock'
         }
@@ -20,7 +20,7 @@ pipeline {
     stages {
         stage('Init') {
             steps {
-                sh "apt-get update && apt-get install -y make docker.io"
+                sh "apk add make docker"
             }
         }
         stage('R6RS') {
