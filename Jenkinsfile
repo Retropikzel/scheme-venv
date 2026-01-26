@@ -23,13 +23,25 @@ pipeline {
                 sh "apk add make docker"
             }
         }
-        stage('R6RS') {
+        stage('R6RS script') {
             steps {
                 script {
                     params.R6RS_SCHEMES.split().each { SCHEME ->
                         stage("${SCHEME}") {
                             catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
                                 sh "make SCHEME=${SCHEME} test-r6rs-script-docker | grep 'scheme-venv-script-test-success-Hello' || exit 1"
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        stage('R6RS compile') {
+            steps {
+                script {
+                    params.R6RS_SCHEMES.split().each { SCHEME ->
+                        stage("${SCHEME}") {
+                            catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
                                 sh "make SCHEME=${SCHEME} test-r6rs-compile-docker | grep 'scheme-venv-compile-test-success-Hello' || exit 1"
                             }
                         }
@@ -37,13 +49,25 @@ pipeline {
                 }
             }
         }
-        stage('R7RS') {
+        stage('R7RS script') {
             steps {
                 script {
                     params.R7RS_SCHEMES.split().each { SCHEME ->
                         stage("${SCHEME}") {
                             catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
                                 sh "make SCHEME=${SCHEME} test-r7rs-script-docker | grep 'scheme-venv-script-test-success' || exit 1"
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        stage('R7RS compile') {
+            steps {
+                script {
+                    params.R7RS_SCHEMES.split().each { SCHEME ->
+                        stage("${SCHEME}") {
+                            catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
                                 sh "make SCHEME=${SCHEME} test-r7rs-compile-docker | grep 'scheme-venv-compile-test-success' || exit 1"
                             }
                         }
