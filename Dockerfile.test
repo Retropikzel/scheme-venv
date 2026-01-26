@@ -25,5 +25,4 @@ COPY test.sps .
 COPY compile-test.scm .
 COPY compile-test.sps .
 COPY scheme-venv .
-
-
+ENV SCHEME_VENV_DEBUG=true

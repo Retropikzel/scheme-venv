@@ -10,17 +10,15 @@ test-r6rs-script:
 	@echo "Starting test Scheme: ${SCHEME}, RNRS: R6RS"
 	@rm -rf testvenv/ \
 		&& ./scheme-venv ${SCHEME} r6rs testvenv \
-		&& ./testvenv/bin/snow-chibi install --always-yes retropikzel.hello \
 		&& ./testvenv/bin/akku install chez-srfi \
-		&& SCHEME_VENV_DEBUG=1 ./testvenv/bin/scheme-script test.sps
+		&& ./testvenv/bin/scheme-script test.sps
 
 test-r6rs-compile:
 	@echo "Starting test Scheme: ${SCHEME}, RNRS: R6RS"
 	@rm -rf testvenv/ \
 		&& ./scheme-venv ${SCHEME} r6rs testvenv \
-		&& ./testvenv/bin/snow-chibi install --always-yes retropikzel.hello \
 		&& ./testvenv/bin/akku install chez-srfi \
-		&& SCHEME_VENV_DEBUG=1 ./testvenv/bin/scheme-compile compile-test.sps \
+		&& ./testvenv/bin/scheme-compile compile-test.sps srfi.64 \
 		&& ./compile-test
 
 test-r7rs-script:
@@ -28,14 +26,14 @@ test-r7rs-script:
 	@rm -rf testvenv/ \
 		&& ./scheme-venv ${SCHEME} r7rs testvenv \
 		&& ./testvenv/bin/snow-chibi install --always-yes retropikzel.hello srfi.64 \
-		&& SCHEME_VENV_DEBUG=1 ./testvenv/bin/scheme-script test.scm
+		&& ./testvenv/bin/scheme-script test.scm
 
 test-r7rs-compile:
 	@echo "Starting test Scheme: ${SCHEME}, RNRS: R7RS"
 	@rm -rf testvenv/ \
 		&& ./scheme-venv ${SCHEME} r7rs testvenv \
-		&& ./testvenv/bin/snow-chibi install --always-yes retropikzel.hello srfi.64 \
-		&& SCHEME_VENV_DEBUG=1 ./testvenv/bin/scheme-compile compile-test.scm \
+		&& ./testvenv/bin/snow-chibi install --always-yes retropikzel.hello \
+		&& ./testvenv/bin/scheme-compile compile-test.scm \
 		&& ./compile-test
 
 build-test-docker-image:

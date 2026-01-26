@@ -74,6 +74,7 @@ if [ "${rnrs}" = "r6rs" ]; then
 {
 cat << EOF
 #!/bin/sh
+echo "if [ ! \"\${SCHEME_VENV_DEBUG}\" = \"\" ]; then set -x; fi"
 if [ "\${1}" = "install" ]; then
     shift
     PATH="${PATH}" $(which snow-chibi) install \
@@ -93,6 +94,7 @@ else
 {
 cat << EOF
 #!/bin/sh
+echo "if [ ! \"\${SCHEME_VENV_DEBUG}\" = \"\" ]; then set -x; fi"
 if [ "\${1}" = "install" ]; then
     shift
     PATH="${PATH}" $(which snow-chibi) install \
@@ -113,6 +115,7 @@ fi
 {
 cat << EOF
 #!/bin/sh
+echo "if [ ! \"\${SCHEME_VENV_DEBUG}\" = \"\" ]; then set -x; fi"
 cd "${venvpath}/lib"
 $(which akku) update
 $(which akku) "\$@"
@@ -123,6 +126,7 @@ chmod +x "${venvpath}/bin/akku"
 ## bin/activate
 {
 cat << EOF
+echo "if [ ! \"\${SCHEME_VENV_DEBUG}\" = \"\" ]; then set -x; fi"
 deactivate () {
     unset SCHEME
     unset COMPILE_R7RS
@@ -172,7 +176,7 @@ if [ "${rnrs}" = "r6rs" ]; then
             fi
             ;;
           "guile")
-            scheme_cmd="guile --r6rs -L \"${venvpath}/lib/.akku/lib\" \"\${IF}\""
+            scheme_cmd="guile --r6rs -x .sls -L \"${venvpath}/lib/.akku/lib\" -s \"\${IF}\""
             ;;
           "ikarus")
             scheme_cmd="IKARUS_LIBRARY_PATH=\"${venvpath}/lib/.akku/lib\" ikarus --r6rs-script \"\${IF}\""
@@ -219,8 +223,8 @@ else
             scheme_compile_cmd="csc -static -X r7rs -R r7rs -o \"\${OF}\" \"\${IF}\""
             ;;
           "cyclone")
-            scheme_cmd="icyc -I \"${venvpath}/lib\" \"\${IF}\""
-            scheme_compile_cmd="cyclone -I \"${venvpath}/lib\" \"\${IF}\""
+            scheme_cmd="CYCLONE_LIBRARY_PATH=\"${venvpath}/lib\" icyc -I \"${venvpath}/lib\" \"\${IF}\""
+            scheme_compile_cmd="CYCLONE_LIBRARY_PATH=\"${venvpath}/lib\" cyclone -I \"${venvpath}/lib\" \"\${IF}\""
             ;;
           "foment")
             scheme_cmd="foment -I \"${venvpath}/lib\" \"\${IF}\""
@@ -234,7 +238,7 @@ else
             scheme_cmd="gosh -r7 -I \"${venvpath}/lib\" \"\${IF}\""
             ;;
           "guile")
-            scheme_cmd="guile --r7rs -C \"${venvpath}/lib\" -L \"${venvpath}/lib\" \"\${IF}\""
+            scheme_cmd="guile --r7rs -x .sld -C \"${venvpath}/lib\" -L \"${venvpath}/lib\" -s \"\${IF}\""
             ;;
           "kawa")
             scheme_cmd="kawa --r7rs --full-tailcalls -Dkawa.import.path=\"${venvpath}/lib/*.sld\" \"\${IF}\""
@@ -250,7 +254,7 @@ else
             scheme_cmd="meevax -I \"${venvpath}/lib\" \"\${IF}\""
             ;;
           "mit-scheme")
-            scheme_cmd="mit-scheme --prepend-library ${venvpath}/lib --batch-mode --load \"\${IF}\" --eval \"(exit 0)\" --args"
+            scheme_cmd="mit-scheme --prepend-library \"${venvpath}/lib\" --batch-mode --load \"\${IF}\" --eval \"(exit 0)\" --args"
             ;;
           "mosh")
             scheme_cmd="mosh --loadpath=\"${venvpath}/lib\" \"\${IF}\""
@@ -284,6 +288,7 @@ fi
 ## bin/scheme-script
 {
     echo "#!/bin/sh"
+    echo "if [ ! \"\${SCHEME_VENV_DEBUG}\" = \"\" ]; then set -x; fi"
     echo "if [ \"\${1}\" = \"\" ]; then echo 'scheme-venv (${implementation} ${rnrs}) Give script file as argument' && exit 1; fi"
     echo "if [ \"\${1}\" = \"--help\" ]; then echo 'scheme-venv (${implementation} ${rnrs}) Give script file as argument' && exit 1; fi"
     echo "IF=\"\${1}\""
@@ -296,7 +301,7 @@ chmod +x "${venvpath}/bin/scheme-script"
 if [ "${scheme_type}" = "interpreter" ]; then
     {
         echo "#!/bin/sh"
-        echo "if [ \"\${SCHEME_VENV_DEBUG}\" = "1" ]; then set -x; fi"
+        echo "if [ ! \"\${SCHEME_VENV_DEBUG}\" = \"\" ]; then set -x; fi"
         echo "IF=\"\$(realpath \"\${1}\")\""
         echo "if [ "${rnrs}" = "r6rs" ]; then OF=\"\${IF%.sps}\"; else OF=\"\${IF%.scm}\"; fi"
         echo "printf \"\n#|\nexec ${venvpath}/bin/scheme-script \\\"\\\${0}\\\" \\\"\\\$@\\\"\n|#\n\" > \"\${OF}\""
@@ -307,7 +312,7 @@ if [ "${scheme_type}" = "interpreter" ]; then
 else
     {
         echo "#!/bin/sh"
-        echo "if [ \"\${SCHEME_VENV_DEBUG}\" = "1" ]; then set -x; fi"
+        echo "if [ ! \"\${SCHEME_VENV_DEBUG}\" = \"\" ]; then set -x; fi"
         echo "IF=\$(realpath \"\${1}\")"
         echo "if [ "${rnrs}" = "r6rs" ]; then OF=\"\${IF%.sps}\"; else OF=\"\${IF%.scm}\"; fi"
         echo "cd ${venvpath}/lib"

@@ -1,8 +1,7 @@
 (import (scheme base)
         (scheme write)
         (scheme process-context)
-        (retropikzel hello)
-        (srfi 64))
+        (retropikzel hello))
 
 (display "scheme-venv-compile-test-success-")
 (hello)
