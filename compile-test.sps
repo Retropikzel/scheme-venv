@@ -4,6 +4,6 @@
         (retropikzel hello)
         (srfi :64))
 
-(display "scheme-venv-test-success-")
+(display "scheme-venv-compile-test-success-")
 (hello)
 (exit 0)

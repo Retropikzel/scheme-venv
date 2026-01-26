@@ -6,22 +6,35 @@ all: build
 build:
 	@echo "No build step, just install"
 
-test-r6rs:
+test-r6rs-script:
 	@echo "Starting test Scheme: ${SCHEME}, RNRS: R6RS"
 	@rm -rf testvenv/ \
 		&& ./scheme-venv ${SCHEME} r6rs testvenv \
 		&& ./testvenv/bin/snow-chibi install --always-yes retropikzel.hello \
 		&& ./testvenv/bin/akku install akku-r7rs \
-		&& SCHEME_VENV_DEBUG=1 ./testvenv/bin/scheme-script test.sps \
+		&& SCHEME_VENV_DEBUG=1 ./testvenv/bin/scheme-script test.sps
+
+test-r6rs-compile:
+	@echo "Starting test Scheme: ${SCHEME}, RNRS: R6RS"
+	@rm -rf testvenv/ \
+		&& ./scheme-venv ${SCHEME} r6rs testvenv \
+		&& ./testvenv/bin/snow-chibi install --always-yes retropikzel.hello \
+		&& ./testvenv/bin/akku install akku-r7rs \
 		&& SCHEME_VENV_DEBUG=1 ./testvenv/bin/scheme-compile compile-test.sps \
 		&& ./compile-test
 
-test-r7rs:
+test-r7rs-script:
 	@echo "Starting test Scheme: ${SCHEME}, RNRS: R7RS"
 	@rm -rf testvenv/ \
 		&& ./scheme-venv ${SCHEME} r7rs testvenv \
 		&& ./testvenv/bin/snow-chibi install --always-yes retropikzel.hello srfi.64 \
-		&& SCHEME_VENV_DEBUG=1 ./testvenv/bin/scheme-script test.scm \
+		&& SCHEME_VENV_DEBUG=1 ./testvenv/bin/scheme-script test.scm
+
+test-r7rs-compile:
+	@echo "Starting test Scheme: ${SCHEME}, RNRS: R7RS"
+	@rm -rf testvenv/ \
+		&& ./scheme-venv ${SCHEME} r7rs testvenv \
+		&& ./testvenv/bin/snow-chibi install --always-yes retropikzel.hello srfi.64 \
 		&& SCHEME_VENV_DEBUG=1 ./testvenv/bin/scheme-compile compile-test.scm \
 		&& ./compile-test
 
@@ -32,11 +45,17 @@ build-test-docker-image:
 		docker build --build-arg IMG=${SCHEME}:head -f Dockerfile.test --tag=scheme-venv-test-${SCHEME} . ; \
 	fi
 
-test-r6rs-docker: build-test-docker-image
-	@docker run scheme-venv-test-${SCHEME} bash -c "make SCHEME=${SCHEME} test-r6rs"
+test-r6rs-script-docker: build-test-docker-image
+	@docker run scheme-venv-test-${SCHEME} bash -c "make SCHEME=${SCHEME} test-r6rs-script"
 
-test-r7rs-docker: build-test-docker-image
-	@docker run scheme-venv-test-${SCHEME} bash -c "make SCHEME=${SCHEME} test-r7rs"
+test-r6rs-compile-docker: build-test-docker-image
+	@docker run scheme-venv-test-${SCHEME} bash -c "make SCHEME=${SCHEME} test-r6rs-compile"
+
+test-r7rs-script-docker: build-test-docker-image
+	@docker run scheme-venv-test-${SCHEME} bash -c "make SCHEME=${SCHEME} test-r7rs-script"
+
+test-r7rs-compile-docker: build-test-docker-image
+	@docker run scheme-venv-test-${SCHEME} bash -c "make SCHEME=${SCHEME} test-r7rs-compile"
 
 install:
 	@mkdir -p ${PREFIX}/bin
