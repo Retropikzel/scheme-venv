@@ -55,7 +55,7 @@ pipeline {
                     params.R7RS_SCHEMES.split().each { SCHEME ->
                         stage("${SCHEME}") {
                             catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
-                                sh "make SCHEME=${SCHEME} test-r7rs-script-docker | grep 'scheme-venv-script-test-success' || exit 1"
+                                sh "make SCHEME=${SCHEME} test-r7rs-script-docker | grep 'scheme-venv-script-test-success-Hello' || exit 1"
                             }
                         }
                     }
@@ -68,7 +68,7 @@ pipeline {
                     params.R7RS_SCHEMES.split().each { SCHEME ->
                         stage("${SCHEME}") {
                             catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
-                                sh "make SCHEME=${SCHEME} test-r7rs-compile-docker | grep 'scheme-venv-compile-test-success' || exit 1"
+                                sh "make SCHEME=${SCHEME} test-r7rs-compile-docker | grep 'scheme-venv-compile-test-success-Hello' || exit 1"
                             }
                         }
                     }
