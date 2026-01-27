@@ -4,7 +4,7 @@ ARG SCHEME=chibi
 ENV SCHEME=${SCHEME}
 ARG RNRS=r7rs
 ENV RNRS=${RNRS}
-RUN apt-get update && apt-get install -y gcc curl make git
+RUN apt-get update && apt-get install -y gcc curl make git xz-utils
 COPY Makefile .
 COPY test.sps .
 COPY test.scm .
