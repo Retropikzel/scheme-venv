@@ -20,7 +20,7 @@ pipeline {
     stages {
         stage('Init') {
             steps {
-                sh "apk add make docker tree git gcc curl"
+                sh "apk add make docker tree git gcc curl xz"
             }
         }
         stage('R6RS script') {
