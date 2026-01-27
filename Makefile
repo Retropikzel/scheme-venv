@@ -1,5 +1,6 @@
 PREFIX=/usr/local
 SCHEME=chibi
+DOCKER_IMG=scheme-venv-test-${SCHEME}
 
 all: build
 
@@ -18,14 +19,14 @@ test-r6rs-compile:
 	@rm -rf testvenv/ \
 		&& ./scheme-venv ${SCHEME} r6rs testvenv \
 		&& ./testvenv/bin/akku install chez-srfi \
-		&& ./testvenv/bin/scheme-compile compile-test.sps srfi.64 \
+		&& ./testvenv/bin/scheme-compile compile-test.sps \
 		&& ./compile-test
 
 test-r7rs-script:
 	@echo "Starting test Scheme: ${SCHEME}, RNRS: R7RS"
 	@rm -rf testvenv/ \
 		&& ./scheme-venv ${SCHEME} r7rs testvenv \
-		&& ./testvenv/bin/snow-chibi install --always-yes retropikzel.hello srfi.64 \
+		&& ./testvenv/bin/snow-chibi install --always-yes retropikzel.hello \
 		&& ./testvenv/bin/scheme-script test.scm
 
 test-r7rs-compile:
@@ -37,23 +38,19 @@ test-r7rs-compile:
 		&& ./compile-test
 
 build-test-docker-image:
-	@if [ "${SCHEME}" = "chicken" ]; then \
-		docker build --build-arg IMG=${SCHEME}:5 -f Dockerfile.test --tag=scheme-venv-test-${SCHEME} . ; \
-	else \
-		docker build --build-arg IMG=${SCHEME}:head -f Dockerfile.test --tag=scheme-venv-test-${SCHEME} . ; \
-	fi
+	docker build --build-arg IMG=${SCHEME}:head -f Dockerfile.test --tag=${DOCKER_IMG} .
 
 test-r6rs-script-docker: build-test-docker-image
-	@docker run scheme-venv-test-${SCHEME} bash -c "make SCHEME=${SCHEME} test-r6rs-script"
+	@docker run ${DOCKER_IMG} bash -c "make SCHEME=${SCHEME} test-r6rs-script"
 
 test-r6rs-compile-docker: build-test-docker-image
-	@docker run scheme-venv-test-${SCHEME} bash -c "make SCHEME=${SCHEME} test-r6rs-compile"
+	@docker run ${DOCKER_IMG} bash -c "make SCHEME=${SCHEME} test-r6rs-compile"
 
 test-r7rs-script-docker: build-test-docker-image
-	@docker run scheme-venv-test-${SCHEME} bash -c "make SCHEME=${SCHEME} test-r7rs-script"
+	@docker run ${DOCKER_IMG} bash -c "make SCHEME=${SCHEME} test-r7rs-script"
 
 test-r7rs-compile-docker: build-test-docker-image
-	@docker run scheme-venv-test-${SCHEME} bash -c "make SCHEME=${SCHEME} test-r7rs-compile"
+	@docker run ${DOCKER_IMG} bash -c "make SCHEME=${SCHEME} test-r7rs-compile"
 
 install:
 	@mkdir -p ${PREFIX}/bin

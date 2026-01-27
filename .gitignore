@@ -1,2 +1,3 @@
 testvenv
 compile-test
+*.link
