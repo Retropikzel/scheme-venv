@@ -1,6 +1,7 @@
 #!/bin/sh
-
 # vi: ft=bash
+
+set -eu
 
 stringContain() { case $2 in *$1* ) return 0;; *) return 1;; esac ;}
 
@@ -52,11 +53,14 @@ fi
 implementation="${1}"
 rnrs="${2}"
 venvpath=$(realpath "${3}")
-schemebinpath="${venvpath}/bin/scheme"
+downloadpath="${venvpath}/downloads"
+toolinstallprefix="${venvpath}/tools"
 scheme_compile_cmd=""
 scheme_cmd=""
 scheme_script_cmd=""
 scheme_type="interpreter"
+
+echo "scheme-venv version 1.0.0, scheme: ${implementation}, rnrs: ${rnrs}"
 
 ## Create venv directories
 mkdir "${venvpath}"
@@ -69,64 +73,9 @@ case "${implementation}" in
     "gambit") scheme_type=compiler ;;
 esac
 
-## bin/snow-chibi
-if [ "${rnrs}" = "r6rs" ]; then
-{
-cat << EOF
-#!/bin/sh
-echo "if [ ! \"\${SCHEME_VENV_DEBUG}\" = \"\" ]; then set -x; fi"
-if [ "\${1}" = "install" ]; then
-    shift
-    PATH="${PATH}" $(which snow-chibi) install \
-        --impls=generic \
-        --install-source-dir=${venvpath}/lib \
-        --install-library-dir=${venvpath}/lib \
-        --install-data-dir=${venvpath}/lib \
-        --install-binary-dir=${venvpath}/bin \
-        "\$@"
-else
-    snow-chibi "\$@"
-fi
-EOF
-} > "${venvpath}/bin/snow-chibi"
-chmod +x "${venvpath}/bin/snow-chibi"
-else
-{
-cat << EOF
-#!/bin/sh
-echo "if [ ! \"\${SCHEME_VENV_DEBUG}\" = \"\" ]; then set -x; fi"
-if [ "\${1}" = "install" ]; then
-    shift
-    PATH="${PATH}" $(which snow-chibi) install \
-        --impls=${implementation} \
-        --install-source-dir=${venvpath}/lib \
-        --install-library-dir=${venvpath}/lib \
-        --install-data-dir=${venvpath}/lib \
-        "\$@"
-else
-    snow-chibi "\$@"
-fi
-EOF
-} > "${venvpath}/bin/snow-chibi"
-chmod +x "${venvpath}/bin/snow-chibi"
-fi
-
-## bin/akku
-{
-cat << EOF
-#!/bin/sh
-echo "if [ ! \"\${SCHEME_VENV_DEBUG}\" = \"\" ]; then set -x; fi"
-cd "${venvpath}/lib"
-$(which akku) update
-$(which akku) "\$@"
-EOF
-} > "${venvpath}/bin/akku"
-chmod +x "${venvpath}/bin/akku"
-
 ## bin/activate
 {
 cat << EOF
-echo "if [ ! \"\${SCHEME_VENV_DEBUG}\" = \"\" ]; then set -x; fi"
 deactivate () {
     unset SCHEME
     unset COMPILE_R7RS
@@ -264,8 +213,8 @@ else
             scheme_cmd="meevax -I \"${venvpath}/lib\" \"\${IF}\""
             ;;
           "mit-scheme")
-            #scheme_cmd="mit-scheme --prepend-library \"${venvpath}/lib/\" --batch-mode --load \"\${IF}\" --eval \"(exit 0)\" --args"
-            scheme_cmd="echo \"MIT-scheme script not supported\" && exit 1"
+            scheme_cmd="mit-scheme --prepend-library=\"${venvpath}/lib/\" --batch-mode --load \"\${IF}\" --eval \"(exit 0)\" --args"
+            #scheme_cmd="echo \"MIT-scheme script not supported\" && exit 1"
             scheme_compile_cmd="echo \"MIT-scheme compile not supported\" && exit 1"
             ;;
           "mosh")
@@ -300,7 +249,6 @@ fi
 ## bin/scheme-script
 {
     echo "#!/bin/sh"
-    echo "if [ ! \"\${SCHEME_VENV_DEBUG}\" = \"\" ]; then set -x; fi"
     echo "if [ \"\${1}\" = \"\" ]; then echo 'scheme-venv (${implementation} ${rnrs}) Give script file as argument' && exit 1; fi"
     echo "if [ \"\${1}\" = \"--help\" ]; then echo 'scheme-venv (${implementation} ${rnrs}) Give script file as argument' && exit 1; fi"
     echo "IF=\"\${1}\""
@@ -313,9 +261,9 @@ chmod +x "${venvpath}/bin/scheme-script"
 if [ "${scheme_type}" = "interpreter" ]; then
     {
         echo "#!/bin/sh"
-        echo "if [ ! \"\${SCHEME_VENV_DEBUG}\" = \"\" ]; then set -x; fi"
         echo "IF=\"\$(realpath \"\${1}\")\""
-        echo "if [ "${rnrs}" = "r6rs" ]; then OF=\"\${IF%.sps}\"; else OF=\"\${IF%.scm}\"; fi"
+        echo "if [ \"${rnrs}\" = \"r6rs\" ]; then OF=\"\${IF%.sps}\"; else OF=\"\${IF%.scm}\"; fi"
+        # shellcheck disable=SC2028
         echo "printf \"\n#|\nexec ${venvpath}/bin/scheme-script \\\"\\\${0}\\\" \\\"\\\$@\\\"\n|#\n\" > \"\${OF}\""
         echo "cat \"\${IF}\" >> \"\${OF}\""
         echo "chmod +x \"\${OF}\""
@@ -324,12 +272,88 @@ if [ "${scheme_type}" = "interpreter" ]; then
 else
     {
         echo "#!/bin/sh"
-        echo "if [ ! \"\${SCHEME_VENV_DEBUG}\" = \"\" ]; then set -x; fi"
         echo "IF=\$(realpath \"\${1}\")"
-        echo "if [ "${rnrs}" = "r6rs" ]; then OF=\"\${IF%.sps}\"; else OF=\"\${IF%.scm}\"; fi"
+        echo "if [ \"${rnrs}\" = \"r6rs\" ]; then OF=\"\${IF%.sps}\"; else OF=\"\${IF%.scm}\"; fi"
         echo "cd ${venvpath}/lib"
         echo "${scheme_compile_cmd}"
     } > "${venvpath}/bin/scheme-compile"
     chmod +x "${venvpath}/bin/scheme-compile"
+fi
+
+if [ "${rnrs}" = "r6rs" ];then
+    sleep 0
+fi
+
+## Check if system has snow-chibi
+if command -v snow-chibi >/dev/null 2>&1; then
+    echo "Found local snow-chibi at $(which snow-chibi)"
+    snow_chibi_path=$(which snow-chibi)
+    snow_chibi_prefix=""
+else
+    echo "Did not found local snow-chibi, installing"
+    mkdir -p "${downloadpath}"
+    mkdir -p "${toolinstallprefix}"
+    git clone https://github.com/ashinn/chibi-scheme.git "${downloadpath}/chibi-scheme" --depth=1
+    make -C "${downloadpath}/chibi-scheme" PREFIX="${toolinstallprefix}"
+    make -C "${downloadpath}/chibi-scheme" PREFIX="${toolinstallprefix}" install
+    snow_chibi_path="${toolinstallprefix}/bin/snow-chibi"
+    snow_chibi_prefix="LD_LIBRARY_PATH=\"${toolinstallprefix}/lib\" PATH=\"${toolinstallprefix}/bin:${PATH}\""
+fi
+
+## bin/snow-chibi
+impls=${implementation}
+if [ "${rnrs}" = "r6rs" ]; then
+    impls=generic
+fi
+
+{
+cat << EOF
+#!/bin/sh
+if [ "\${1}" = "install" ]; then
+    shift
+    ${snow_chibi_prefix} "${snow_chibi_path}" install \
+        --impls=${impls} \
+        --install-source-dir=${venvpath}/lib \
+        --install-library-dir=${venvpath}/lib \
+        --install-data-dir=${venvpath}/lib \
+        --install-binary-dir=${venvpath}/bin \
+        "\$@"
+else
+    ${snow_chibi_prefix} "${snow_chibi_path}" "\$@"
+fi
+EOF
+} > "${venvpath}/bin/snow-chibi"
+chmod +x "${venvpath}/bin/snow-chibi"
+
+if [ "${rnrs}" = "r6rs" ]; then
+## Check if system has akku
+if command -v akku >/dev/null 2>&1; then
+    echo "Found local akku at $(which akku)"
+    akku_path=$(which akku)
+    akku_prefix=""
+else
+    echo "Did not found local akku, installing"
+    mkdir -p "${downloadpath}"
+    mkdir -p "${toolinstallprefix}/akku"
+    mkdir -p "${toolinstallprefix}/bin"
+    curl -o "${downloadpath}/akku.tar.xz" https://gitlab.com/-/project/6808260/uploads/094ce726ce3c6cf8c14560f1e31aaea0/akku-1.1.0.amd64-linux.tar.xz
+    tar -C "${toolinstallprefix}/akku" --strip-components 1 -xf "${downloadpath}/akku.tar.xz"
+    akku_install_path="${toolinstallprefix}/akku/lib/x86_64-linux-gnu/akku"
+    echo "exec \"${akku_install_path}/petite\" -b \"${akku_install_path}/petite.boot\" --program \"${akku_install_path}/akku\" \"\$@\"" > "${toolinstallprefix}/bin/akku"
+    chmod +x "${toolinstallprefix}/bin/akku"
+    akku_path="${toolinstallprefix}/bin/akku"
+    akku_prefix="PATH=\"${toolinstallprefix}/bin:${PATH}\""
+fi
+
+## bin/akku
+{
+cat << EOF
+#!/bin/sh
+cd "${venvpath}/lib"
+"${akku_prefix}" "${akku_path}" update
+${akku_prefix} "${akku_path}" "\$@"
+EOF
+} > "${venvpath}/bin/akku"
+chmod +x "${venvpath}/bin/akku"
 fi
 

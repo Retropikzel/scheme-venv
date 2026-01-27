@@ -1,5 +1,6 @@
 PREFIX=/usr/local
 SCHEME=chibi
+RNRS=r7rs
 DOCKER_IMG=scheme-venv-test-${SCHEME}
 
 all: build
@@ -7,50 +8,29 @@ all: build
 build:
 	@echo "No build step, just install"
 
-test-r6rs-script:
-	@echo "Starting test Scheme: ${SCHEME}, RNRS: R6RS"
-	@rm -rf testvenv/ \
-		&& ./scheme-venv ${SCHEME} r6rs testvenv \
-		&& ./testvenv/bin/akku install chez-srfi \
-		&& ./testvenv/bin/scheme-script test.sps
+testvenv:
+	./scheme-venv ${SCHEME} ${RNRS} testvenv
 
-test-r6rs-compile:
-	@echo "Starting test Scheme: ${SCHEME}, RNRS: R6RS"
-	@rm -rf testvenv/ \
-		&& ./scheme-venv ${SCHEME} r6rs testvenv \
-		&& ./testvenv/bin/akku install chez-srfi \
-		&& ./testvenv/bin/scheme-compile compile-test.sps \
-		&& ./compile-test
+test-script: testvenv
+	@if [ "${RNRS}" = "r6rs" ]; then ./testvenv/bin/akku install chez-srfi; fi
+	@if [ "${RNRS}" = "r6rs" ]; then ./testvenv/bin/scheme-script test.sps; fi
+	@if [ "${RNRS}" = "r7rs" ]; then ./testvenv/bin/snow-chibi install --always-yes retropikzel.hello; fi
+	@if [ "${RNRS}" = "r7rs" ]; then ./testvenv/bin/scheme-script test.scm; fi
 
-test-r7rs-script:
-	@echo "Starting test Scheme: ${SCHEME}, RNRS: R7RS"
-	@rm -rf testvenv/ \
-		&& ./scheme-venv ${SCHEME} r7rs testvenv \
-		&& ./testvenv/bin/snow-chibi install --always-yes retropikzel.hello \
-		&& ./testvenv/bin/scheme-script test.scm
-
-test-r7rs-compile:
-	@echo "Starting test Scheme: ${SCHEME}, RNRS: R7RS"
-	@rm -rf testvenv/ \
-		&& ./scheme-venv ${SCHEME} r7rs testvenv \
-		&& ./testvenv/bin/snow-chibi install --always-yes retropikzel.hello \
-		&& ./testvenv/bin/scheme-compile compile-test.scm \
-		&& ./compile-test
+test-compile: testvenv
+	@if [ "${RNRS}" = "r6rs" ]; then ./testvenv/bin/akku install chez-srfi; fi
+	@if [ "${RNRS}" = "r6rs" ]; then ./testvenv/bin/scheme-compile test.sps && ./test; fi
+	@if [ "${RNRS}" = "r7rs" ]; then ./testvenv/bin/snow-chibi install --always-yes retropikzel.hello; fi
+	@if [ "${RNRS}" = "r7rs" ]; then ./testvenv/bin/scheme-compile test.scm && ./test; fi
 
 build-test-docker-image:
-	docker build --build-arg IMG=${SCHEME}:head -f Dockerfile.test --tag=${DOCKER_IMG} .
+	docker build --build-arg SCHEME=${SCHEME} --build-arg RNRS=${RNRS} -f Dockerfile.test --tag=${DOCKER_IMG} .
 
-test-r6rs-script-docker: build-test-docker-image
-	@docker run ${DOCKER_IMG} bash -c "make SCHEME=${SCHEME} test-r6rs-script"
+test-script-docker: build-test-docker-image
+	docker run ${DOCKER_IMG} bash -c "make SCHEME=${SCHEME} RNRS=${RNRS} test-script"
 
-test-r6rs-compile-docker: build-test-docker-image
-	@docker run ${DOCKER_IMG} bash -c "make SCHEME=${SCHEME} test-r6rs-compile"
-
-test-r7rs-script-docker: build-test-docker-image
-	@docker run ${DOCKER_IMG} bash -c "make SCHEME=${SCHEME} test-r7rs-script"
-
-test-r7rs-compile-docker: build-test-docker-image
-	@docker run ${DOCKER_IMG} bash -c "make SCHEME=${SCHEME} test-r7rs-compile"
+test-compile-docker: build-test-docker-image testvenv
+	@docker run ${DOCKER_IMG} bash -c "make SCHEME=${SCHEME} RNRS=${RNRS} test-compile"
 
 install:
 	@mkdir -p ${PREFIX}/bin
@@ -58,3 +38,6 @@ install:
 
 uninstall:
 	@-rm ${PREFIX}/bin/scheme-venv
+
+clean:
+	rm -rf testvenv
