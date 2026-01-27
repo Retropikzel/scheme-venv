@@ -222,11 +222,11 @@ else
             chicken_version=$(csi -version | grep "Version" | awk '{split($0,a," "); split(a[2],b,"."); print(b[1])}')
             if [ "${chicken_version}" = "5" ]; then
                 #scheme_cmd="LD_LIBRARY_PATH=\"${venvpath}/lib\" csi -R r7rs -I \"${venvpath}/lib\" -script \"\${IF}\""
-                scheme_cmd="echo \"Chicken script not yet supported\" && exit 1"
+                scheme_cmd="echo \"Chicken script not supported\" && exit 1"
                 scheme_compile_cmd="csc -static -X r7rs -R r7rs -o \"\${OF}\" \"\${IF}\""
             else
                 #scheme_cmd="LD_LIBRARY_PATH=\"${venvpath}/lib\" csi -I \"${venvpath}/lib\" -script \"\${IF}\""
-                scheme_cmd="echo \"Chicken script not yet supported\" && exit 1"
+                scheme_cmd="echo \"Chicken script not supported\" && exit 1"
                 scheme_compile_cmd="csc -static -o \"\${OF}\" \"\${IF}\""
             fi
             ;;
@@ -240,15 +240,15 @@ else
           "gambit")
             scheme_cmd="gsi \"${venvpath}/lib/\" \"\${IF}\""
             #scheme_compile_cmd="gsc -o \"\${OF}\" -exe -nopreload \"${venvpath}/lib/\" \"\${IF}\""
-            scheme_compile_cmd="echo \"Gambit compiler not yet supported\" && exit 1"
+            scheme_compile_cmd="echo \"Gambit compiler not supported\" && exit 1"
             ;;
           "gauche")
             scheme_cmd="gosh -r7 -I \"${venvpath}/lib\" \"\${IF}\""
             ;;
           "guile")
             #scheme_cmd="guile --r7rs -x .sld -C \"${venvpath}/lib\" -L \"${venvpath}/lib\" -s \"\${IF}\""
-            scheme_cmd="echo \"Guile script not yet supported\" && exit 1"
-            scheme_compile_cmd="echo \"Guile compiler not yet supported\" && exit 1"
+            scheme_cmd="echo \"Guile script not supported\" && exit 1"
+            scheme_compile_cmd="echo \"Guile compiler not supported\" && exit 1"
             ;;
           "kawa")
             scheme_cmd="kawa --r7rs --full-tailcalls -Dkawa.import.path=\"${venvpath}/lib/*.sld\" \"\${IF}\""
@@ -264,9 +264,9 @@ else
             scheme_cmd="meevax -I \"${venvpath}/lib\" \"\${IF}\""
             ;;
           "mit-scheme")
-            #scheme_cmd="mit-scheme --prepend-library \"${venvpath}/lib\" --batch-mode --load \"\${IF}\" --eval \"(exit 0)\" --args"
-            scheme_cmd="echo \"MIT-scheme script not yet supported\" && exit 1"
-            scheme_compile_cmd="echo \"MIT-scheme compile not yet supported\" && exit 1"
+            #scheme_cmd="mit-scheme --prepend-library \"${venvpath}/lib/\" --batch-mode --load \"\${IF}\" --eval \"(exit 0)\" --args"
+            scheme_cmd="echo \"MIT-scheme script not supported\" && exit 1"
+            scheme_compile_cmd="echo \"MIT-scheme compile not supported\" && exit 1"
             ;;
           "mosh")
             scheme_cmd="mosh --loadpath=\"${venvpath}/lib\" \"\${IF}\""

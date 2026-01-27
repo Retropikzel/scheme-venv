@@ -30,7 +30,6 @@ pipeline {
                         stage("${SCHEME}") {
                             catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
                                 sh "make SCHEME=${SCHEME} test-r6rs-script-docker | grep 'scheme-venv-script-test-success-Hello' || exit 1"
-                                sh "tree testvenv"
                             }
                         }
                     }
@@ -44,7 +43,6 @@ pipeline {
                         stage("${SCHEME}") {
                             catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
                                 sh "make SCHEME=${SCHEME} test-r6rs-compile-docker | grep 'scheme-venv-compile-test-success-Hello' || exit 1"
-                                sh "tree testvenv"
                             }
                         }
                     }
@@ -58,7 +56,6 @@ pipeline {
                         stage("${SCHEME}") {
                             catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
                                 sh "make SCHEME=${SCHEME} test-r7rs-script-docker | grep 'scheme-venv-script-test-success-Hello' || exit 1"
-                                sh "tree testvenv"
                             }
                         }
                     }
@@ -72,7 +69,6 @@ pipeline {
                         stage("${SCHEME}") {
                             catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
                                 sh "make SCHEME=${SCHEME} test-r7rs-compile-docker | grep 'scheme-venv-compile-test-success-Hello' || exit 1"
-                                sh "tree testvenv"
                             }
                         }
                     }
