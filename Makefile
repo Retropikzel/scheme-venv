@@ -29,7 +29,7 @@ build-test-docker-image:
 test-script-docker: build-test-docker-image
 	docker run ${DOCKER_IMG} bash -c "make SCHEME=${SCHEME} RNRS=${RNRS} test-script"
 
-test-compile-docker: build-test-docker-image testvenv
+test-compile-docker: build-test-docker-image
 	@docker run ${DOCKER_IMG} bash -c "make SCHEME=${SCHEME} RNRS=${RNRS} test-compile"
 
 install:
