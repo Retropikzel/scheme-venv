@@ -1,36 +1,36 @@
 PREFIX=/usr/local
 SCHEME=chibi
 RNRS=r7rs
-DOCKER_IMG=scheme-venv-test-${SCHEME}
+DOCKERTAG=scheme-venv-test-${SCHEME}
 
 all: build
 
 build:
 	@echo "No build step, just install"
 
-testvenv:
+init-testvenv:
 	./scheme-venv ${SCHEME} ${RNRS} testvenv
 
-test-script: testvenv
+test-script: init-testvenv
 	@if [ "${RNRS}" = "r6rs" ]; then ./testvenv/bin/akku install chez-srfi; fi
 	@if [ "${RNRS}" = "r6rs" ]; then ./testvenv/bin/scheme-script test.sps; fi
 	@if [ "${RNRS}" = "r7rs" ]; then ./testvenv/bin/snow-chibi install --always-yes retropikzel.hello; fi
 	@if [ "${RNRS}" = "r7rs" ]; then ./testvenv/bin/scheme-script test.scm; fi
 
-test-compile: testvenv
+test-compile: init-testvenv
 	@if [ "${RNRS}" = "r6rs" ]; then ./testvenv/bin/akku install chez-srfi; fi
 	@if [ "${RNRS}" = "r6rs" ]; then ./testvenv/bin/scheme-compile test.sps && ./test; fi
 	@if [ "${RNRS}" = "r7rs" ]; then ./testvenv/bin/snow-chibi install --always-yes retropikzel.hello; fi
 	@if [ "${RNRS}" = "r7rs" ]; then ./testvenv/bin/scheme-compile test.scm && ./test; fi
 
-build-test-docker-image:
-	docker build --build-arg SCHEME=${SCHEME} --build-arg RNRS=${RNRS} -f Dockerfile.test --tag=${DOCKER_IMG} .
+build-docker-image:
+	docker build -f Dockerfile.test --tag=${DOCKERTAG}
 
-test-script-docker: build-test-docker-image
-	docker run ${DOCKER_IMG} bash -c "make SCHEME=${SCHEME} RNRS=${RNRS} test-script"
+test-script-docker: build-docker-image
+	docker run -v ${PWD}:${PWD} -w ${PWD} ${DOCKERTAG} sh -c "make SCHEME=${SCHEME} RNRS=${RNRS} test-script"
 
-test-compile-docker: build-test-docker-image
-	@docker run ${DOCKER_IMG} bash -c "make SCHEME=${SCHEME} RNRS=${RNRS} test-compile"
+test-compile-docker: build-docker-image
+	docker run -v ${PWD}:${PWD} -w ${PWD} ${DOCKERTAG} sh -c "make SCHEME=${SCHEME} RNRS=${RNRS} test-compile"
 
 install:
 	@mkdir -p ${PREFIX}/bin

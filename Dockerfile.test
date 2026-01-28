@@ -1,12 +1,3 @@
 ARG SCHEME=chibi
 FROM docker.io/schemers/${SCHEME}:head
-ARG SCHEME=chibi
-ENV SCHEME=${SCHEME}
-ARG RNRS=r7rs
-ENV RNRS=${RNRS}
 RUN apt-get update && apt-get install -y gcc curl make git xz-utils
-COPY Makefile .
-COPY test.sps .
-COPY test.scm .
-COPY scheme-venv .
-RUN ./scheme-venv ${SCHEME} ${RNRS} testvenv

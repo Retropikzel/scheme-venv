@@ -45,16 +45,22 @@ if [ "${3}" = "" ]; then
 fi
 
 if [ -d "${3}" ]; then
-    echo "Path already exists"
-    exit 1
+    if [ -f "${3}/bin/scheme-venv-info" ]; then
+        echo "Directory is already venv, reiniting..."
+    else
+        echo "Path already exists, and is not scheme-venv (no /bin/scheme-venv-info)"
+        exit 1
+    fi
 fi
 
 ## Build variables
 implementation="${1}"
 rnrs="${2}"
 venvpath=$(realpath "${3}")
+venvname=$(basename "${venvpath}")
 downloadpath="${venvpath}/downloads"
 toolinstallprefix="${venvpath}/tools"
+docker_tag="${venvname}-${implementation}-${rnrs}"
 scheme_compile_cmd=""
 scheme_cmd=""
 scheme_script_cmd=""
@@ -63,9 +69,13 @@ scheme_type="interpreter"
 echo "scheme-venv version 1.0.0, scheme: ${implementation}, rnrs: ${rnrs}"
 
 ## Create venv directories
-mkdir "${venvpath}"
-mkdir "${venvpath}/bin"
-mkdir "${venvpath}/lib"
+mkdir -p "${venvpath}"
+mkdir -p "${venvpath}/bin"
+if [ -d "${venvpath}/lib" ]; then
+    rm -rf "${venvpath}/lib"
+fi
+mkdir -p "${venvpath}/lib"
+mkdir -p "${venvpath}/etc"
 
 ## Set scheme type if other than interpreter
 case "${implementation}" in
@@ -94,7 +104,7 @@ export COMPILE_SCHEME=${implementation}
 export TEST_SCHEME=${implementation}
 export SCHEME=${implementation}
 
-venvname=\$(basename "${venvpath}")
+venvname="${venvname}"
 
 export SCHEME_VENV_OLD_PS1="\${PS1}"
 export PS1="(\${venvname}) \${PS1:-}"
@@ -106,7 +116,37 @@ echo "${implementation} ${rnrs}"
 echo "if [ "${rnrs}" = "r6rs" ]; then . ${venvpath}/lib/.akku/bin/activate; fi"
 EOF
 } > "${venvpath}/bin/activate"
-chmod +x "${venvpath}/bin/activate"
+
+## /etc/Dockerfile
+{
+cat << EOF
+FROM docker.io/schemers/${implementation}:head
+RUN apt-get update && apt-get install -y make gcc libffi-dev git ca-certificates curl xz-utils
+WORKDIR /build
+RUN git clone https://github.com/ashinn/chibi-scheme.git --depth=1
+WORKDIR /build/chibi-scheme
+RUN make
+RUN make install
+WORKDIR /build
+RUN curl -o akku.tar.xz https://gitlab.com/-/project/6808260/uploads/094ce726ce3c6cf8c14560f1e31aaea0/akku-1.1.0.amd64-linux.tar.xz
+RUN mkdir akku && tar -C akku --strip-components 1 -xf akku.tar.xz
+WORKDIR /build/akku
+RUN ./install.sh
+WORKDIR /workdir
+RUN ln -s ${venvpath}/bin/* /usr/local/bin/
+#CMD ["bash", "--rcfile", "${venvpath}/bin/activate"]
+CMD ["bash"]
+EOF
+} > "${venvpath}/etc/Dockerfile"
+
+## /bin/docker
+{
+cat << EOF
+docker build -f "${venvpath}/etc/Dockerfile" --tag="${docker_tag}"
+docker run -v "${venvpath}":"${venvpath}" -it "${docker_tag}"
+EOF
+} > "${venvpath}/bin/docker"
+chmod +x "${venvpath}/bin/docker"
 
 ## Set scheme commands
 
@@ -280,25 +320,6 @@ else
     chmod +x "${venvpath}/bin/scheme-compile"
 fi
 
-if [ "${rnrs}" = "r6rs" ];then
-    sleep 0
-fi
-
-## Check if system has snow-chibi
-if command -v snow-chibi >/dev/null 2>&1; then
-    echo "Found local snow-chibi at $(which snow-chibi)"
-    snow_chibi_path=$(which snow-chibi)
-    snow_chibi_prefix=""
-else
-    echo "Did not found local snow-chibi, installing"
-    mkdir -p "${downloadpath}"
-    mkdir -p "${toolinstallprefix}"
-    git clone https://github.com/ashinn/chibi-scheme.git "${downloadpath}/chibi-scheme" --depth=1
-    make -C "${downloadpath}/chibi-scheme" PREFIX="${toolinstallprefix}"
-    make -C "${downloadpath}/chibi-scheme" PREFIX="${toolinstallprefix}" install
-    snow_chibi_path="${toolinstallprefix}/bin/snow-chibi"
-    snow_chibi_prefix="LD_LIBRARY_PATH=\"${toolinstallprefix}/lib\" PATH=\"${toolinstallprefix}/bin:${PATH}\""
-fi
 
 ## bin/snow-chibi
 impls=${implementation}
@@ -311,7 +332,8 @@ cat << EOF
 #!/bin/sh
 if [ "\${1}" = "install" ]; then
     shift
-    ${snow_chibi_prefix} "${snow_chibi_path}" install \
+    snow-chibi \
+    install \
         --impls=${impls} \
         --install-source-dir=${venvpath}/lib \
         --install-library-dir=${venvpath}/lib \
@@ -319,41 +341,31 @@ if [ "\${1}" = "install" ]; then
         --install-binary-dir=${venvpath}/bin \
         "\$@"
 else
-    ${snow_chibi_prefix} "${snow_chibi_path}" "\$@"
+    snow-chibi "\$@"
 fi
 EOF
 } > "${venvpath}/bin/snow-chibi"
 chmod +x "${venvpath}/bin/snow-chibi"
-
-if [ "${rnrs}" = "r6rs" ]; then
-## Check if system has akku
-if command -v akku >/dev/null 2>&1; then
-    echo "Found local akku at $(which akku)"
-    akku_path=$(which akku)
-    akku_prefix=""
-else
-    echo "Did not found local akku, installing"
-    mkdir -p "${downloadpath}"
-    mkdir -p "${toolinstallprefix}/akku"
-    mkdir -p "${toolinstallprefix}/bin"
-    curl -o "${downloadpath}/akku.tar.xz" https://gitlab.com/-/project/6808260/uploads/094ce726ce3c6cf8c14560f1e31aaea0/akku-1.1.0.amd64-linux.tar.xz
-    tar -C "${toolinstallprefix}/akku" --strip-components 1 -xf "${downloadpath}/akku.tar.xz"
-    akku_install_path="${toolinstallprefix}/akku/lib/x86_64-linux-gnu/akku"
-    echo "exec \"${akku_install_path}/petite\" -b \"${akku_install_path}/petite.boot\" --program \"${akku_install_path}/akku\" \"\$@\"" > "${toolinstallprefix}/bin/akku"
-    chmod +x "${toolinstallprefix}/bin/akku"
-    akku_path="${toolinstallprefix}/bin/akku"
-    akku_prefix="PATH=\"${toolinstallprefix}/bin:${PATH}\""
-fi
 
 ## bin/akku
 {
 cat << EOF
 #!/bin/sh
 cd "${venvpath}/lib"
-"${akku_prefix}" "${akku_path}" update
-${akku_prefix} "${akku_path}" "\$@"
+akku \$@
 EOF
 } > "${venvpath}/bin/akku"
 chmod +x "${venvpath}/bin/akku"
-fi
 
+
+## /bin/scheme-venv-info
+{
+cat << EOF
+#!/bin/sh
+echo "Scheme: ${implementation}"
+echo "RNRS: ${rnrs}"
+EOF
+} > "${venvpath}/bin/scheme-venv-info"
+chmod +x "${venvpath}/bin/scheme-venv-info"
+
+echo "Initialized scheme-venv ${venvpath}, with ${implementation} and ${rnrs}"
