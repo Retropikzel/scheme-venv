@@ -1,4 +1,4 @@
-testvenv
+venv
 compile-test
 *.link
 test

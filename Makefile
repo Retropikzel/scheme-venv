@@ -8,20 +8,20 @@ all: build
 build:
 	@echo "No build step, just install"
 
-init-testvenv:
-	./scheme-venv ${SCHEME} ${RNRS} testvenv
+init-venv:
+	./scheme-venv ${SCHEME} ${RNRS} venv
 
-test-script: init-testvenv
-	@if [ "${RNRS}" = "r6rs" ]; then ./testvenv/bin/akku install chez-srfi; fi
-	@if [ "${RNRS}" = "r6rs" ]; then ./testvenv/bin/scheme-script test.sps; fi
-	@if [ "${RNRS}" = "r7rs" ]; then ./testvenv/bin/snow-chibi install --always-yes retropikzel.hello; fi
-	@if [ "${RNRS}" = "r7rs" ]; then ./testvenv/bin/scheme-script test.scm; fi
+test-script: init-venv
+	@if [ "${RNRS}" = "r6rs" ]; then ./venv/bin/akku install chez-srfi; fi
+	@if [ "${RNRS}" = "r6rs" ]; then ./venv/bin/scheme-script test.sps; fi
+	@if [ "${RNRS}" = "r7rs" ]; then ./venv/bin/snow-chibi install --always-yes retropikzel.hello; fi
+	@if [ "${RNRS}" = "r7rs" ]; then ./venv/bin/scheme-script test.scm; fi
 
-test-compile: init-testvenv
-	@if [ "${RNRS}" = "r6rs" ]; then ./testvenv/bin/akku install chez-srfi; fi
-	@if [ "${RNRS}" = "r6rs" ]; then ./testvenv/bin/scheme-compile test.sps && ./test; fi
-	@if [ "${RNRS}" = "r7rs" ]; then ./testvenv/bin/snow-chibi install --always-yes retropikzel.hello; fi
-	@if [ "${RNRS}" = "r7rs" ]; then ./testvenv/bin/scheme-compile test.scm && ./test; fi
+test-compile: init-venv
+	@if [ "${RNRS}" = "r6rs" ]; then ./venv/bin/akku install chez-srfi; fi
+	@if [ "${RNRS}" = "r6rs" ]; then ./venv/bin/scheme-compile test.sps && ./test; fi
+	@if [ "${RNRS}" = "r7rs" ]; then ./venv/bin/snow-chibi install --always-yes retropikzel.hello; fi
+	@if [ "${RNRS}" = "r7rs" ]; then ./venv/bin/scheme-compile test.scm && ./test; fi
 
 build-docker-image:
 	docker build -f Dockerfile.test --tag=${DOCKERTAG}
@@ -40,4 +40,4 @@ uninstall:
 	@-rm ${PREFIX}/bin/scheme-venv
 
 clean:
-	rm -rf testvenv
+	rm -rf venv
