@@ -161,7 +161,7 @@ if [ "${rnrs}" = "r6rs" ]; then
             then
                 scheme_cmd="chezscheme --libdirs ${venvpath}/lib/.akku/lib --program \"\${IF}\""
             else
-                scheme_cmd="scheme --libdirs \"${venvpath}/lib/.akku/lib\" --program \"\${IF}\""
+                scheme_cmd="scheme --libdirs ${venvpath}/lib/.akku/lib --program \"\${IF}\""
             fi
             ;;
           "guile")
@@ -187,10 +187,10 @@ if [ "${rnrs}" = "r6rs" ]; then
             scheme_cmd="racket -I scheme/init -l r6rs/run.rkt -S \"${venvpath}/lib/.akku/lib\" \"\${IF}\""
             ;;
           "sagittarius")
-            scheme_cmd="sash -r6 -L \"${venvpath}/lib\" \"\${IF}\""
+            scheme_cmd="sash -r6 -L \"${venvpath}/lib/.akku/lib\" \"\${IF}\""
             ;;
           "ypsilon")
-            scheme_cmd="ypsilon --r6rs --sitelib \"${venvpath}/lib\" --top-level-program \"\${IF}\""
+            scheme_cmd="ypsilon --r6rs --sitelib \"${venvpath}/lib/.akku/lib\" --top-level-program \"\${IF}\""
             ;;
           *)
             >&2 echo "Unsupported implementation RnRS combination: ${implementation} ${rnrs}"
@@ -322,11 +322,6 @@ fi
 
 
 ## bin/snow-chibi
-impls=${implementation}
-if [ "${rnrs}" = "r6rs" ]; then
-    impls=generic
-fi
-
 {
 cat << EOF
 #!/bin/sh
@@ -334,7 +329,7 @@ if [ "\${1}" = "install" ]; then
     shift
     snow-chibi \
     install \
-        --impls=${impls} \
+        --impls=${implementation} \
         --install-source-dir=${venvpath}/lib \
         --install-library-dir=${venvpath}/lib \
         --install-data-dir=${venvpath}/lib \
