@@ -61,9 +61,9 @@ venvname=$(basename "${venvpath}")
 downloadpath="${venvpath}/downloads"
 toolinstallprefix="${venvpath}/tools"
 docker_tag="${venvname}-${implementation}-${rnrs}"
-scheme_compile_cmd=""
 scheme_cmd=""
-scheme_script_cmd=""
+scheme_compile_cmd=""
+scheme_repl_cmd=""
 scheme_type="interpreter"
 
 echo "scheme-venv version 1.0.0, scheme: ${implementation}, rnrs: ${rnrs}"
@@ -155,135 +155,164 @@ if [ "${rnrs}" = "r6rs" ]; then
     case "${implementation}" in
           "capyscheme")
             scheme_cmd="capy --r6rs -L \"${venvpath}/lib\" --script \"\${IF}\""
+            scheme_repl_cmd="capy --r6rs -L \"${venvpath}/lib\""
             ;;
           "chezscheme")
             if command -v chezscheme >/dev/null 2>&1
             then
                 scheme_cmd="chezscheme --libdirs ${venvpath}/lib/.akku/lib --program \"\${IF}\""
+                scheme_repl_cmd="chezscheme --libdirs ${venvpath}/lib/.akku/lib"
             else
                 scheme_cmd="scheme --libdirs ${venvpath}/lib/.akku/lib --program \"\${IF}\""
+                scheme_repl_cmd="scheme --libdirs ${venvpath}/lib/.akku/lib"
             fi
             ;;
           "guile")
             scheme_cmd="guile --r6rs -x .sls -L \"${venvpath}/lib/.akku/lib\" -s \"\${IF}\""
+            scheme_repl_cmd="guile --r6rs -x .sls -L \"${venvpath}/lib/.akku/lib\""
             ;;
           "ikarus")
             scheme_cmd="IKARUS_LIBRARY_PATH=\"${venvpath}/lib/.akku/lib\" ikarus --r6rs-script \"\${IF}\""
+            scheme_repl_cmd="IKARUS_LIBRARY_PATH=\"${venvpath}/lib/.akku/lib\" ikarus"
             ;;
           "ironscheme")
             scheme_cmd="ironscheme -I \"${venvpath}/lib/.akku/lib\" \"\${IF}\""
+            scheme_repl_cmd="ironscheme -I \"${venvpath}/lib/.akku/lib\""
             ;;
           "larceny")
             scheme_cmd="larceny -nobanner -quiet -utf8 -r6 -I \"${venvpath}/lib/.akku/lib\" \"\${IF}\""
+            scheme_repl_cmd="larceny -nobanner -quiet -utf8 -r6 -I \"${venvpath}/lib/.akku/lib\""
             ;;
           "loko")
             scheme_cmd="LOKO_LIBRARY_PATH=\"${venvpath}/lib/.akku/lib\" loko --program \"\${IF}\""
+            scheme_repl_cmd="LOKO_LIBRARY_PATH=\"${venvpath}/lib/.akku/lib\" loko"
             scheme_compile_cmd="LOKO_LIBRARY_PATH=\"${venvpath}/lib/.akku/lib\" loko -o \"\${OF}\" --compile \"\${IF}\""
             ;;
           "mosh")
             scheme_cmd="mosh --loadpath=\"${venvpath}/lib/.akku/lib\" \"\${IF}\""
+            scheme_repl_cmd="mosh --loadpath=\"${venvpath}/lib/.akku/lib\""
             ;;
           "racket")
             scheme_cmd="racket -I scheme/init -l r6rs/run.rkt -S \"${venvpath}/lib/.akku/lib\" \"\${IF}\""
+            scheme_repl_cmd="racket -I scheme/init -l r6rs/run.rkt -S \"${venvpath}/lib/.akku/lib\""
             ;;
           "sagittarius")
             scheme_cmd="sash -r6 -L \"${venvpath}/lib/.akku/lib\" \"\${IF}\""
+            scheme_repl_cmd="sash -r6 -L \"${venvpath}/lib/.akku/lib\""
             ;;
           "ypsilon")
             scheme_cmd="ypsilon --r6rs --sitelib \"${venvpath}/lib/.akku/lib\" --top-level-program \"\${IF}\""
+            scheme_repl_cmd="ypsilon --r6rs --sitelib \"${venvpath}/lib/.akku/lib\""
             ;;
           *)
             >&2 echo "Unsupported implementation RnRS combination: ${implementation} ${rnrs}"
             exit 1
             ;;
     esac
-    echo "${scheme_script_cmd}" > "${venvpath}/bin/scheme-r6rs"
 else
 ## R7RS
     case "${implementation}" in
           "capyscheme")
             scheme_cmd="capy --r7rs -L \"${venvpath}/lib\" --script \"\${IF}\""
+            scheme_repl_cmd="capy --r7rs -L \"${venvpath}/lib\""
             ;;
           "chibi")
             scheme_cmd="chibi-scheme -I \"${venvpath}/lib\" \"\${IF}\""
+            scheme_repl_cmd="chibi-scheme -I \"${venvpath}/lib\""
             ;;
           "chicken")
             chicken_version=$(csi -version | grep "Version" | awk '{split($0,a," "); split(a[2],b,"."); print(b[1])}')
             if [ "${chicken_version}" = "5" ]; then
                 #scheme_cmd="LD_LIBRARY_PATH=\"${venvpath}/lib\" csi -R r7rs -I \"${venvpath}/lib\" -script \"\${IF}\""
                 scheme_cmd="echo \"Chicken script not supported\" && exit 1"
+                scheme_repl_cmd="echo \"Chicken repl not supported\" && exit 1"
                 scheme_compile_cmd="csc -static -X r7rs -R r7rs -o \"\${OF}\" \"\${IF}\""
             else
                 #scheme_cmd="LD_LIBRARY_PATH=\"${venvpath}/lib\" csi -I \"${venvpath}/lib\" -script \"\${IF}\""
                 scheme_cmd="echo \"Chicken script not supported\" && exit 1"
+                scheme_repl_cmd="echo \"Chicken repl not supported\" && exit 1"
                 scheme_compile_cmd="csc -static -o \"\${OF}\" \"\${IF}\""
             fi
             ;;
           "cyclone")
             scheme_cmd="CYCLONE_LIBRARY_PATH=\"${venvpath}/lib\" icyc -I \"${venvpath}/lib\" \"\${IF}\""
+            scheme_repl_cmd="CYCLONE_LIBRARY_PATH=\"${venvpath}/lib\" icyc -I \"${venvpath}/lib\""
             scheme_compile_cmd="CYCLONE_LIBRARY_PATH=\"${venvpath}/lib\" cyclone -I \"${venvpath}/lib\" \"\${IF}\""
             ;;
           "foment")
             scheme_cmd="foment -I \"${venvpath}/lib\" \"\${IF}\""
+            scheme_repl_cmd="foment -I \"${venvpath}/lib\""
             ;;
           "gambit")
             scheme_cmd="gsi \"${venvpath}/lib/\" \"\${IF}\""
+            scheme_repl_cmd="gsi \"${venvpath}/lib/\""
             #scheme_compile_cmd="gsc -o \"\${OF}\" -exe -nopreload \"${venvpath}/lib/\" \"\${IF}\""
             scheme_compile_cmd="echo \"Gambit compiler not supported\" && exit 1"
             ;;
           "gauche")
             scheme_cmd="gosh -r7 -I \"${venvpath}/lib\" \"\${IF}\""
+            scheme_repl_cmd="gosh -r7 -I \"${venvpath}/lib\""
             ;;
           "guile")
-            #scheme_cmd="guile --r7rs -x .sld -C \"${venvpath}/lib\" -L \"${venvpath}/lib\" -s \"\${IF}\""
-            scheme_cmd="echo \"Guile script not supported\" && exit 1"
+            scheme_cmd="guile --r7rs -x .sld -C \"${venvpath}/lib\" -L \"${venvpath}/lib\" -s \"\${IF}\""
+            scheme_repl_cmd="guile --r7rs -x .sld -C \"${venvpath}/lib\" -L \"${venvpath}/lib\""
             scheme_compile_cmd="echo \"Guile compiler not supported\" && exit 1"
             ;;
           "kawa")
-            scheme_cmd="kawa --r7rs --full-tailcalls -Dkawa.import.path=\"${venvpath}/lib/*.sld\" \"\${IF}\""
+            scheme_cmd="kawa -J--add-exports=java.base/jdk.internal.foreign.abi=ALL-UNNAMED -J--add-exports=java.base/jdk.internal.foreign.layout=ALL-UNNAMED -J--add-exports=java.base/jdk.internal.foreign=ALL-UNNAMED -J--enable-native-access=ALL-UNNAMED -J--enable-preview --r7rs --full-tailcalls -Dkawa.import.path=\"${venvpath}/lib/*.sld\" \"\${IF}\""
+            scheme_repl_cmd="kawa -J--add-exports=java.base/jdk.internal.foreign.abi=ALL-UNNAMED -J--add-exports=java.base/jdk.internal.foreign.layout=ALL-UNNAMED -J--add-exports=java.base/jdk.internal.foreign=ALL-UNNAMED -J--enable-native-access=ALL-UNNAMED -J--enable-preview --r7rs --full-tailcalls -Dkawa.import.path=\"${venvpath}/lib/*.sld\""
             ;;
           "larceny")
             scheme_cmd="larceny -nobanner -quiet -utf8 -r7 -I \"${venvpath}/lib\" \"\${IF}\""
+            scheme_repl_cmd="larceny -nobanner -quiet -utf8 -r7 -I \"${venvpath}/lib\""
             ;;
           "loko")
             scheme_cmd="LOKO_LIBRARY_PATH=\"${venvpath}/lib\" loko -std=r7rs --program \"\${IF}\""
+            scheme_repl_cmd="LOKO_LIBRARY_PATH=\"${venvpath}/lib\" loko -std=r7rs"
             scheme_compile_cmd="LOKO_LIBRARY_PATH=\"${venvpath}/lib\" loko -std=r7rs -o \"\${OF}\" --compile \"\${IF}\""
             ;;
           "meevax")
             scheme_cmd="meevax -I \"${venvpath}/lib\" \"\${IF}\""
+            scheme_repl_cmd="meevax -I \"${venvpath}/lib\""
             ;;
           "mit-scheme")
             scheme_cmd="mit-scheme --prepend-library=\"${venvpath}/lib/\" --batch-mode --load \"\${IF}\" --eval \"(exit 0)\" --args"
-            #scheme_cmd="echo \"MIT-scheme script not supported\" && exit 1"
+            scheme_repl_cmd="mit-scheme --prepend-library=\"${venvpath}/lib/\""
             scheme_compile_cmd="echo \"MIT-scheme compile not supported\" && exit 1"
             ;;
           "mosh")
             scheme_cmd="mosh --loadpath=\"${venvpath}/lib\" \"\${IF}\""
+            scheme_repl_cmd="mosh --loadpath=\"${venvpath}/lib\""
             ;;
           "racket")
             scheme_cmd="racket -I r7rs -S \"${venvpath}/lib\" --script \"\${IF}\""
+            scheme_repl_cmd="racket -I r7rs -S \"${venvpath}/lib\""
             ;;
           "sagittarius")
             scheme_cmd="sash -r7 -L \"${venvpath}/lib\" \"\${IF}\""
+            scheme_repl_cmd="sash -r7 -L \"${venvpath}/lib\""
             ;;
           "skint")
             scheme_cmd="skint -I \"${venvpath}/lib\" \"\${IF}\""
+            scheme_repl_cmd="skint -I \"${venvpath}/lib\""
             ;;
           "stklos")
             scheme_cmd="stklos -I \"${venvpath}/lib\" \"\${IF}\""
+            scheme_repl_cmd="stklos -I \"${venvpath}/lib\""
             ;;
           "tr7")
             scheme_cmd="TR7_LIB_PATH=\"${venvpath}/lib:\${TR7_LIB_PATH}\" tr7i -1 \"\${IF}\""
+            scheme_repl_cmd="TR7_LIB_PATH=\"${venvpath}/lib:\${TR7_LIB_PATH}\" tr7i -1"
             ;;
           "ypsilon")
             scheme_cmd="ypsilon --r7rs --sitelib \"${venvpath}/lib\" --top-level-program \"\${IF}\""
+            scheme_repl_cmd="ypsilon --r7rs --sitelib \"${venvpath}/lib\""
             ;;
           *)
             >&2 echo "Unsupported implementation RnRS combination: ${implementation} ${rnrs}"
             exit 1
             ;;
     esac
-    echo "${scheme_script_cmd}" > "${venvpath}/bin/scheme-r7rs"
 fi
 
 ## bin/scheme-script
@@ -296,6 +325,13 @@ fi
     echo "${scheme_cmd} \"\$@\""
 } > "${venvpath}/bin/scheme-script"
 chmod +x "${venvpath}/bin/scheme-script"
+
+## bin/scheme-repl
+{
+    echo "#!/bin/sh"
+    echo "${scheme_repl_cmd} \"\$@\""
+} > "${venvpath}/bin/scheme-repl"
+chmod +x "${venvpath}/bin/scheme-repl"
 
 ## bin/scheme-compile
 if [ "${scheme_type}" = "interpreter" ]; then
