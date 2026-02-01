@@ -312,7 +312,7 @@ chmod +x "${venvpath}/bin/scheme-repl"
 if [ "${scheme_type}" = "interpreter" ]; then
     {
         echo "#!/bin/sh"
-        echo "if [ ! \"${VENV_DEBUG}\" = \"\" ]; then set -x; fi"
+        echo "if [ ! \"\${VENV_DEBUG}\" = \"\" ]; then set -x; fi"
         echo "IF=\"\$(realpath \"\${1}\")\""
         echo "if [ \"${rnrs}\" = \"r6rs\" ]; then OF=\"\${IF%.sps}\"; else OF=\"\${IF%.scm}\"; fi"
         # shellcheck disable=SC2028
