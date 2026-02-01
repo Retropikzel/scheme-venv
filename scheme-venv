@@ -199,12 +199,12 @@ else
                 #scheme_cmd="LD_LIBRARY_PATH=\"${venvpath}/lib\" csi -R r7rs -I \"${venvpath}/lib\" -script \"\${IF}\""
                 scheme_cmd="echo \"Chicken script not supported\" && exit 1"
                 scheme_repl_cmd="echo \"Chicken repl not supported\" && exit 1"
-                scheme_compile_cmd="cd \"${venvpath}/lib\" && csc -static -X r7rs -R r7rs \${VENV_CSC_ARGS:-} -I${venvpath}/include -L${venvpath}/lib -o \"\${OF}\" \"\${IF}\""
+                scheme_compile_cmd="cd \"${venvpath}/lib\" && csc -static -keyword-style none -X r7rs -R r7rs \${VENV_CSC_ARGS:-} -I${venvpath}/include -L${venvpath}/lib -o \"\${OF}\" \"\${IF}\""
             else
                 #scheme_cmd="LD_LIBRARY_PATH=\"${venvpath}/lib\" csi -I \"${venvpath}/lib\" -script \"\${IF}\""
                 scheme_cmd="echo \"Chicken script not supported\" && exit 1"
                 scheme_repl_cmd="echo \"Chicken repl not supported\" && exit 1"
-                scheme_compile_cmd="cd \"${venvpath}/lib\" && csc -static \${VENV_CSC_ARGS:-} -I${venvpath}/include -L${venvpath}/lib -o \"\${OF}\" \"\${IF}\""
+                scheme_compile_cmd="cd \"${venvpath}/lib\" && csc -static -r7rs-syntax \${VENV_CSC_ARGS:-} -I${venvpath}/include -L${venvpath}/lib -o \"\${OF}\" \"\${IF}\""
             fi
             ;;
           "cyclone")
