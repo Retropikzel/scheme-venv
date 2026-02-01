@@ -3,10 +3,10 @@ Tool to create Scheme virtual environments
 
 ## scheme-compile
 
-Before compilation the directory is changed to be venv/lib.
 
 ## Chicken
 
+- Before compilation the directory is changed to be venv/lib so libraries will be found
 - venv/include
     - added into include paths
 - venv/lib
