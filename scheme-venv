@@ -71,6 +71,7 @@ echo "scheme-venv version 1.0.0, scheme: ${implementation}, rnrs: ${rnrs}"
 ## Create venv directories
 mkdir -p "${venvpath}"
 mkdir -p "${venvpath}/bin"
+mkdir -p "${venvpath}/include"
 if [ -d "${venvpath}/lib" ]; then
     rm -rf "${venvpath}/lib"
 fi
@@ -86,6 +87,7 @@ esac
 ## bin/activate
 {
 cat << EOF
+if [ ! "\${VENV_DEBUG}" = "" ]; then set -x; fi
 deactivate () {
     unset SCHEME
     unset COMPILE_R7RS
@@ -117,44 +119,13 @@ echo "if [ "${rnrs}" = "r6rs" ]; then . ${venvpath}/lib/.akku/bin/activate; fi"
 EOF
 } > "${venvpath}/bin/activate"
 
-## /etc/Dockerfile
-{
-cat << EOF
-FROM docker.io/schemers/${implementation}:head
-RUN apt-get update && apt-get install -y make gcc libffi-dev git ca-certificates curl xz-utils
-WORKDIR /build
-RUN git clone https://github.com/ashinn/chibi-scheme.git --depth=1
-WORKDIR /build/chibi-scheme
-RUN make
-RUN make install
-WORKDIR /build
-RUN curl -o akku.tar.xz https://gitlab.com/-/project/6808260/uploads/094ce726ce3c6cf8c14560f1e31aaea0/akku-1.1.0.amd64-linux.tar.xz
-RUN mkdir akku && tar -C akku --strip-components 1 -xf akku.tar.xz
-WORKDIR /build/akku
-RUN ./install.sh
-WORKDIR /workdir
-RUN ln -s ${venvpath}/bin/* /usr/local/bin/
-#CMD ["bash", "--rcfile", "${venvpath}/bin/activate"]
-CMD ["bash"]
-EOF
-} > "${venvpath}/etc/Dockerfile"
-
-## /bin/docker
-{
-cat << EOF
-docker build -f "${venvpath}/etc/Dockerfile" --tag="${docker_tag}"
-docker run -v "${venvpath}":"${venvpath}" -it "${docker_tag}"
-EOF
-} > "${venvpath}/bin/docker"
-chmod +x "${venvpath}/bin/docker"
-
 ## Set scheme commands
 
 if [ "${rnrs}" = "r6rs" ]; then
 ## R6RS
     case "${implementation}" in
           "capyscheme")
-            scheme_cmd="capy --r6rs -L \"${venvpath}/lib\" --script \"\${IF}\""
+            scheme_cmd="capy --r6rs -L \"${venvpath}/lib\" VENV_CAPYSCHEME_ARGS --script \"\${IF}\""
             scheme_repl_cmd="capy --r6rs -L \"${venvpath}/lib\""
             ;;
           "chezscheme")
@@ -226,12 +197,12 @@ else
                 #scheme_cmd="LD_LIBRARY_PATH=\"${venvpath}/lib\" csi -R r7rs -I \"${venvpath}/lib\" -script \"\${IF}\""
                 scheme_cmd="echo \"Chicken script not supported\" && exit 1"
                 scheme_repl_cmd="echo \"Chicken repl not supported\" && exit 1"
-                scheme_compile_cmd="csc -static -X r7rs -R r7rs -o \"\${OF}\" \"\${IF}\""
+                scheme_compile_cmd="csc -static -X r7rs -R r7rs \${VENV_CSC_ARGS:-} -I${venvpath}/include -L${venvpath}/lib -o \"\${OF}\" \"\${IF}\""
             else
                 #scheme_cmd="LD_LIBRARY_PATH=\"${venvpath}/lib\" csi -I \"${venvpath}/lib\" -script \"\${IF}\""
                 scheme_cmd="echo \"Chicken script not supported\" && exit 1"
                 scheme_repl_cmd="echo \"Chicken repl not supported\" && exit 1"
-                scheme_compile_cmd="csc -static -o \"\${OF}\" \"\${IF}\""
+                scheme_compile_cmd="csc -static \${VENV_CSC_ARGS:-} -I${venvpath}/include -L${venvpath}/lib -o \"\${OF}\" \"\${IF}\""
             fi
             ;;
           "cyclone")
@@ -318,6 +289,7 @@ fi
 ## bin/scheme-script
 {
     echo "#!/bin/sh"
+    echo "if [ ! \"\${VENV_DEBUG}\" = \"\" ]; then set -x; fi"
     echo "if [ \"\${1}\" = \"\" ]; then echo 'scheme-venv (${implementation} ${rnrs}) Give script file as argument' && exit 1; fi"
     echo "if [ \"\${1}\" = \"--help\" ]; then echo 'scheme-venv (${implementation} ${rnrs}) Give script file as argument' && exit 1; fi"
     echo "IF=\"\${1}\""
@@ -329,6 +301,7 @@ chmod +x "${venvpath}/bin/scheme-script"
 ## bin/scheme-repl
 {
     echo "#!/bin/sh"
+    echo "if [ ! \"\${VENV_DEBUG}\" = \"\" ]; then set -x; fi"
     echo "${scheme_repl_cmd} \"\$@\""
 } > "${venvpath}/bin/scheme-repl"
 chmod +x "${venvpath}/bin/scheme-repl"
@@ -337,6 +310,7 @@ chmod +x "${venvpath}/bin/scheme-repl"
 if [ "${scheme_type}" = "interpreter" ]; then
     {
         echo "#!/bin/sh"
+        echo "if [ ! \"${VENV_DEBUG}\" = \"\" ]; then set -x; fi"
         echo "IF=\"\$(realpath \"\${1}\")\""
         echo "if [ \"${rnrs}\" = \"r6rs\" ]; then OF=\"\${IF%.sps}\"; else OF=\"\${IF%.scm}\"; fi"
         # shellcheck disable=SC2028
@@ -348,24 +322,30 @@ if [ "${scheme_type}" = "interpreter" ]; then
 else
     {
         echo "#!/bin/sh"
+        echo "if [ ! \"\${VENV_DEBUG}\" = \"\" ]; then set -x; fi"
         echo "IF=\$(realpath \"\${1}\")"
         echo "if [ \"${rnrs}\" = \"r6rs\" ]; then OF=\"\${IF%.sps}\"; else OF=\"\${IF%.scm}\"; fi"
-        echo "cd ${venvpath}/lib"
+        #echo "cd ${venvpath}/lib"
         echo "${scheme_compile_cmd}"
     } > "${venvpath}/bin/scheme-compile"
     chmod +x "${venvpath}/bin/scheme-compile"
 fi
 
+impls="${implementation}"
+if [ "${RNRS}" = "" ]; then
+    impls=generic
+fi
 
 ## bin/snow-chibi
 {
 cat << EOF
 #!/bin/sh
+if [ ! "\${VENV_DEBUG}" = "" ]; then set -x; fi
 if [ "\${1}" = "install" ]; then
     shift
     snow-chibi \
     install \
-        --impls=${implementation} \
+        --impls=${impls} \
         --install-source-dir=${venvpath}/lib \
         --install-library-dir=${venvpath}/lib \
         --install-data-dir=${venvpath}/lib \
@@ -382,6 +362,7 @@ chmod +x "${venvpath}/bin/snow-chibi"
 {
 cat << EOF
 #!/bin/sh
+if [ ! "\${VENV_DEBUG}" = "" ]; then set -x; fi
 cd "${venvpath}/lib"
 akku \$@
 EOF
@@ -393,6 +374,7 @@ chmod +x "${venvpath}/bin/akku"
 {
 cat << EOF
 #!/bin/sh
+if [ ! "\${VENV_DEBUG}" = "" ]; then set -x; fi
 echo "Scheme: ${implementation}"
 echo "RNRS: ${rnrs}"
 EOF
