@@ -39,14 +39,48 @@ R7RS:
     ./main
 
 
-## Implementation specific notes
+## Supported impelmentations and notes
 
-### Chicken
+### R6RS
 
-- Before compilation the directory is changed to be venv/lib so libraries will be found
-- venv/include
-    - added into include paths
-- venv/lib
-    - added into library paths
-- venv/scheme-compile
-    - Environment variable VENV\_CSC\_ARGS is added to csc arguments
+- Capyscheme
+- Chezscheme
+- Guile
+- Ikarus
+- Ironscheme
+- Larceny
+- Loko
+- Mosh
+- Racket
+- Sagittarius
+- Ypsilon
+
+### R7RS
+
+- Capyscheme
+- Chibi
+- Chicken
+    - Before compilation the directory is changed to be venv/lib so libraries will be found
+    - venv/include
+        - added into include paths
+    - venv/lib
+        - added into library paths
+    - venv/scheme-compile
+        - Environment variable VENV\_CSC\_ARGS is added to csc arguments
+- Cyclone
+- Foment
+- Gambit
+- Gauche
+- Guile
+- Kawa
+- Larceny
+- Loko
+- Meevax
+- MIT-Scheme
+- Mosh
+- Racket
+- Sagittarius
+- Skint
+- STklos
+- tr7
+- Ypsilon
