@@ -42,6 +42,15 @@ Run Scheme script.
 
 Compile Scheme code to executable.
 
+### etc/Dockerfile
+
+Dockerfile used in docker image building. If you need to add something you
+can for example do:
+
+    echo "RUN apt-get install make" >> venv/etc/Dockerfile
+    cp Makefile venv/
+    echo "COPY Makefile ." >> venv/etc/Dockerfile
+
 ### bin/docker-build
 
 Build docker venvs docker image. Run this before docker-run or docker-repl.
@@ -80,8 +89,8 @@ Run scheme repl inside venv inside docker.
         - added into include paths
     - venv/lib
         - added into library paths
-    - venv/scheme-compile
-        - Environment variable VENV\_CSC\_ARGS is added to csc arguments
+    - venv/bin/scheme-compile
+        - Environment variable VENV_CSC_ARGS is added to csc arguments
 - Cyclone
 - Foment
 - Gambit
