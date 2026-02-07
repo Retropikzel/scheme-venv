@@ -2,3 +2,5 @@ venv
 compile-test
 *.link
 test
+*.deb
+deb

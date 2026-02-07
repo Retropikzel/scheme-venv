@@ -1,3 +1,5 @@
+VERSION=1.0.0
+DEB=scheme-venv-${VERSION}.deb
 PREFIX=/usr/local
 SCHEME=chibi
 RNRS=r7rs
@@ -31,6 +33,16 @@ test-script-docker: build-docker-image
 
 test-compile-docker: build-docker-image
 	docker run -v ${PWD}:${PWD} -w ${PWD} ${DOCKERTAG} sh -c "make SCHEME=${SCHEME} RNRS=${RNRS} test-compile"
+
+deb:
+	mkdir -p deb/usr/local/bin
+	cp scheme-venv deb/usr/local/bin/
+	mkdir -p deb/DEBIAN
+	printf "Package: scheme-venv\nArchitecture: amd64\nVersion: ${VERSION}\nSection: misc\nMaintainer: Retropikzel <retropikzel@iki.fi>\nDescription: Tool to create Scheme virtual environments\n" \
+		> deb/DEBIAN/control
+	dpkg-deb -b deb
+	cp deb.deb scheme-venv-latest.deb
+	mv deb.deb scheme-venv-${VERSION}.deb
 
 install:
 	@mkdir -p ${PREFIX}/bin

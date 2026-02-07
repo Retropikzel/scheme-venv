@@ -47,10 +47,12 @@ if [ "${3}" = "" ]; then
 fi
 
 if [ -d "${3}" ]; then
-    if [ -f "${3}/bin/scheme-venv-info" ]; then
-        echo "Directory is already venv, reiniting..."
-    else
-        echo "Path already exists, and is not scheme-venv (no /bin/scheme-venv-info)"
+    if [ -f "${3}" ]; then
+        echo "Path exists"
+        exit 1
+    fi
+    if [ -d "${3}" ]; then
+        echo "Path exists"
         exit 1
     fi
 fi
@@ -166,8 +168,8 @@ if [ "${rnrs}" = "r6rs" ]; then
             scheme_repl_cmd="mosh --loadpath=\"${venvpath}/lib/.akku/lib\""
             ;;
           "racket")
-            scheme_cmd="racket -I scheme/init -l r6rs/run.rkt -S \"${venvpath}/lib/.akku/lib\" \"\${IF}\""
-            scheme_repl_cmd="racket -I scheme/init -l r6rs/run.rkt -S \"${venvpath}/lib/.akku/lib\""
+            scheme_cmd="PLTCOLLECTS=\"${venvpath}/lib/.akku/lib\" racket -I scheme/init -l r6rs/run.rkt -S \"${venvpath}/lib/.akku/lib\" \"\${IF}\""
+            scheme_repl_cmd="PLTCOLLECTS=\"${venvpath}/lib/.akku/lib\" racket -I scheme/init -l r6rs/run.rkt -S \"${venvpath}/lib/.akku/lib\""
             ;;
           "sagittarius")
             scheme_cmd="sash -r6 -L \"${venvpath}/lib/.akku/lib\" \"\${IF}\""
@@ -217,10 +219,9 @@ else
             scheme_repl_cmd="foment -I \"${venvpath}/lib\""
             ;;
           "gambit")
-            scheme_cmd="gsi \"${venvpath}/lib/\" \"\${IF}\""
-            scheme_repl_cmd="gsi \"${venvpath}/lib/\""
-            #scheme_compile_cmd="gsc -o \"\${OF}\" -exe -nopreload \"${venvpath}/lib/\" \"\${IF}\""
-            scheme_compile_cmd="echo \"Gambit compiler not supported\" && exit 1"
+            scheme_cmd="gsi -:r7rs \"${venvpath}/lib/\" \"\${IF}\""
+            scheme_repl_cmd="gsi -:r7rs \"${venvpath}/lib/\""
+            scheme_compile_cmd="gsc -:r7rs -o \"\${OF}\" -exe -nopreload \"${venvpath}/lib/\" \"\${IF}\""
             ;;
           "gauche")
             scheme_cmd="gosh -r7 -I \"${venvpath}/lib\" \"\${IF}\""
@@ -232,8 +233,9 @@ else
             scheme_compile_cmd="echo \"Guile compiler not supported\" && exit 1"
             ;;
           "kawa")
-            scheme_cmd="kawa -J--add-exports=java.base/jdk.internal.foreign.abi=ALL-UNNAMED -J--add-exports=java.base/jdk.internal.foreign.layout=ALL-UNNAMED -J--add-exports=java.base/jdk.internal.foreign=ALL-UNNAMED -J--enable-native-access=ALL-UNNAMED -J--enable-preview --r7rs --full-tailcalls -Dkawa.import.path=\"${venvpath}/lib/*.sld\" \"\${IF}\""
-            scheme_repl_cmd="kawa -J--add-exports=java.base/jdk.internal.foreign.abi=ALL-UNNAMED -J--add-exports=java.base/jdk.internal.foreign.layout=ALL-UNNAMED -J--add-exports=java.base/jdk.internal.foreign=ALL-UNNAMED -J--enable-native-access=ALL-UNNAMED -J--enable-preview --r7rs --full-tailcalls -Dkawa.import.path=\"${venvpath}/lib/*.sld\""
+            kawa_library_path=$(kawa -e "(display (get-environment-variable \"CLASSPATH\"))" | awk -F'kawa.jar' '{print $1}')
+            scheme_cmd="kawa -J--add-exports=java.base/jdk.internal.foreign.abi=ALL-UNNAMED -J--add-exports=java.base/jdk.internal.foreign.layout=ALL-UNNAMED -J--add-exports=java.base/jdk.internal.foreign=ALL-UNNAMED -J--enable-native-access=ALL-UNNAMED -Dkawa.import.path=\"${venvpath}/lib/*.sld:${kawa_library_path}/*.sld\" --r7rs --full-tailcalls -f \"\${IF}\""
+            scheme_repl_cmd="kawa -J--add-exports=java.base/jdk.internal.foreign.abi=ALL-UNNAMED -J--add-exports=java.base/jdk.internal.foreign.layout=ALL-UNNAMED -J--add-exports=java.base/jdk.internal.foreign=ALL-UNNAMED -J--enable-native-access=ALL-UNNAMED -Dkawa.import.path=\"${venvpath}/lib/*.sld:${kawa_library_path}/*.sld\" --r7rs --full-tailcalls"
             ;;
           "larceny")
             scheme_cmd="larceny -nobanner -quiet -utf8 -r7 -I \"${venvpath}/lib\" \"\${IF}\""
@@ -258,8 +260,8 @@ else
             scheme_repl_cmd="mosh --loadpath=\"${venvpath}/lib\""
             ;;
           "racket")
-            scheme_cmd="racket -I r7rs -S \"${venvpath}/lib\" --script \"\${IF}\""
-            scheme_repl_cmd="racket -I r7rs -S \"${venvpath}/lib\""
+            scheme_cmd="PLTCOLLECTS=\"${venvpath}/lib\" racket -I r7rs -S \"${venvpath}/lib\" --script \"\${IF}\""
+            scheme_repl_cmd="PLTCOLLECTS=\"${venvpath}/lib\" racket -I r7rs -S \"${venvpath}/lib\""
             ;;
           "sagittarius")
             scheme_cmd="sash -r7 -L \"${venvpath}/lib\" \"\${IF}\""
@@ -333,11 +335,6 @@ else
     chmod +x "${venvpath}/bin/scheme-compile"
 fi
 
-impls="${implementation}"
-if [ "${RNRS}" = "" ]; then
-    impls=generic
-fi
-
 ## bin/snow-chibi
 {
 cat << EOF
@@ -347,7 +344,7 @@ if [ "\${1}" = "install" ]; then
     shift
     snow-chibi \
     install \
-        --impls=${impls} \
+        --impls=${implementation} \
         --install-source-dir=${venvpath}/lib \
         --install-library-dir=${venvpath}/lib \
         --install-data-dir=${venvpath}/lib \
@@ -365,7 +362,7 @@ chmod +x "${venvpath}/bin/snow-chibi"
 cat << EOF
 #!/bin/sh
 if [ ! "\${VENV_DEBUG}" = "" ]; then set -x; fi
-cd "${venvpath}/lib"
+cd "${venvpath}/lib" || exit 1
 akku \$@
 EOF
 } > "${venvpath}/bin/akku"
