@@ -341,7 +341,6 @@ fi
 cat << EOF
 #!/bin/sh
 if [ ! "\${VENV_DEBUG}" = "" ]; then set -x; fi
-PATH="${venvpath}/opt/chibi-scheme/bin:\${PATH}"
 if [ "\${1}" = "install" ]; then
     shift
     snow-chibi \
@@ -369,18 +368,6 @@ akku \$@
 EOF
 } > "${venvpath}/bin/akku"
 chmod +x "${venvpath}/bin/akku"
-
-## /bin/install-snow-chibi
-{
-cat << EOF
-#!/bin/sh
-if [ ! "\${VENV_DEBUG}" = "" ]; then set -x; fi
-git clone https://github.com/ashinn/chibi-scheme.git --depth=1 "${venvpath}/etc/chibi-scheme"
-make PREFIX="${venvpath}/opt/chibi-scheme" -C "${venvpath}/etc/chibi-scheme"
-make PREFIX="${venvpath}/opt/chibi-scheme" -C "${venvpath}/etc/chibi-scheme" install
-EOF
-} > "${venvpath}/bin/install-snow-chibi"
-chmod +x "${venvpath}/bin/install-snow-chibi"
 
 
 ## /bin/scheme-venv-info

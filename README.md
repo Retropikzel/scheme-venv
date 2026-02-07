@@ -42,10 +42,6 @@ Run Scheme script.
 
 Compile Scheme code to executable.
 
-### bin/install-snow-chibi
-
-Install snow-chibi inside the venv.
-
 
 ## Supported impelmentations and notes
 
