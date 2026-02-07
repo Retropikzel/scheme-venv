@@ -38,6 +38,9 @@ R7RS:
     scheme-compile main.scm
     ./main
 
+Note that scheme-venv does not install snow-chibi, akku or any Scheme
+implementations. You have to install them yourself into your system.
+
 
 ## Supported impelmentations and notes
 
