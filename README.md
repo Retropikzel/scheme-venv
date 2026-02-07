@@ -42,26 +42,10 @@ Run Scheme script.
 
 Compile Scheme code to executable.
 
-### etc/Dockerfile
+### bin/install-snow-chibi
 
-Dockerfile used in docker image building. If you need to add something you
-can for example do:
+Install snow-chibi inside the venv.
 
-    echo "RUN apt-get install make" >> venv/etc/Dockerfile
-    cp Makefile venv/
-    echo "COPY Makefile ." >> venv/etc/Dockerfile
-
-### bin/docker-build
-
-Build docker venvs docker image. Run this before docker-run or docker-repl.
-
-### bin/docker-run
-
-Run command inside venv inside docker.
-
-### bin/docker-repl
-
-Run scheme repl inside venv inside docker.
 
 ## Supported impelmentations and notes
 
