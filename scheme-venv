@@ -48,11 +48,11 @@ fi
 
 if [ -d "${3}" ]; then
     if [ -f "${3}" ]; then
-        echo "Path exists"
+        echo "Can not create venv, path exists"
         exit 1
     fi
     if [ -d "${3}" ]; then
-        echo "Path exists"
+        echo "Can not create venv, path exists"
         exit 1
     fi
 fi
