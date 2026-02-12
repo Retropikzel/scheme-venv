@@ -70,7 +70,7 @@ Compile Scheme code to executable.
     - venv/lib
         - added into library paths
     - venv/bin/scheme-compile
-        - Environment variable VENV_CSC_ARGS is added to csc arguments
+        - Use environment variable CSC\_OPTIONS to add arguments for the compiler
 - Cyclone
 - Foment
 - Gambit
