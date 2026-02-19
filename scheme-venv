@@ -151,12 +151,12 @@ if [ "${rnrs}" = "r6rs" ]; then
             ;;
           "guile")
             scheme_cmd="guile --r6rs -x .sls -L \"${venvpath}/lib/.akku/lib\" -s \"\${IF}\""
-            scheme_version_cmd="guile --version | head -n 1 | awk '{print($4);}'"
+            scheme_version_cmd="guile --version | head -n 1 | awk '{print(\$4);}'"
             scheme_repl_cmd="guile --r6rs -x .sls -L \"${venvpath}/lib/.akku/lib\""
             ;;
           "ikarus")
             scheme_cmd="IKARUS_LIBRARY_PATH=\"${venvpath}/lib/.akku/lib\" ikarus --r6rs-script \"\${IF}\""
-            scheme_version_cmd="ikarus -v 2>&1 | head -n 1 | awk '{print($4);}' | sed 's/,//'"
+            scheme_version_cmd="ikarus -v 2>&1 | head -n 1 | awk '{print(\$4);}' | sed 's/,//'"
             scheme_repl_cmd="IKARUS_LIBRARY_PATH=\"${venvpath}/lib/.akku/lib\" ikarus"
             ;;
           "ironscheme")
@@ -165,7 +165,7 @@ if [ "${rnrs}" = "r6rs" ]; then
             ;;
           "larceny")
             scheme_cmd="larceny -nobanner -quiet -utf8 -r6 -I \"${venvpath}/lib/.akku/lib\" \"\${IF}\""
-            scheme_version_cmd="larceny --version | awk '{print($2);}'"
+            scheme_version_cmd="larceny --version | awk '{print(\$2);}'"
             scheme_repl_cmd="larceny -nobanner -quiet -utf8 -r6 -I \"${venvpath}/lib/.akku/lib\""
             ;;
           "loko")
