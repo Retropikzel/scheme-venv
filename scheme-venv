@@ -240,7 +240,7 @@ else
           "gambit")
             scheme_cmd="gsi -:r7rs \"${venvpath}/lib/\" \"\${IF}\""
             scheme_repl_cmd="gsi -:r7rs \"${venvpath}/lib/\""
-            scheme_version_cmd="gsc -v | awk '{print(\$1);}'"
+            scheme_version_cmd="gsc -v | awk '{print(\$1);}' | sed 's/v//'"
             scheme_compile_cmd="gsc -:r7rs -o \"\${OF}\" -exe -nopreload \"${venvpath}/lib/\" \"\${IF}\""
             ;;
           "gauche")
