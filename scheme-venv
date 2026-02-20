@@ -88,7 +88,6 @@ mkdir -p "${venvpath}/install-prefix"
 case "${implementation}" in
     "chicken") scheme_type=compiler ;;
     "cyclone") scheme_type=compiler ;;
-    "gambit") scheme_type=compiler ;;
     "loko") scheme_type=compiler ;;
 esac
 
@@ -241,7 +240,6 @@ else
             scheme_cmd="gsi -:r7rs \"${venvpath}/lib/\" \"\${IF}\""
             scheme_repl_cmd="gsi -:r7rs \"${venvpath}/lib/\""
             scheme_version_cmd="gsc -v | awk '{print(\$1);}' | sed 's/v//'"
-            scheme_compile_cmd="gsc -:r7rs -o \"\${OF}\" -exe -nopreload \"${venvpath}/lib/\" \"\${IF}\""
             ;;
           "gauche")
             scheme_cmd="gosh -r7 -I \"${venvpath}/lib\" \"\${IF}\""

@@ -74,6 +74,7 @@ Compile Scheme code to executable.
 - Cyclone
 - Foment
 - Gambit
+    - No compilation, runs code with interpreter
 - Gauche
 - Guile
 - Kawa
