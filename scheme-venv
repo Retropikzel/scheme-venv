@@ -252,7 +252,6 @@ else
             scheme_cmd="guile --r7rs -x .sld -C \"${venvpath}/lib\" -L \"${venvpath}/lib\" -s \"\${IF}\""
             scheme_repl_cmd="guile --r7rs -x .sld -C \"${venvpath}/lib\" -L \"${venvpath}/lib\""
             scheme_version_cmd="guile --version | head -n 1 | awk '{print(\$4);}'"
-            scheme_compile_cmd="echo \"Guile compiler not supported\" && exit 1"
             ;;
           "kawa")
             kawa_library_path=$(kawa -e "(display (get-environment-variable \"CLASSPATH\"))" | awk -F'kawa.jar' '{print $1}')
