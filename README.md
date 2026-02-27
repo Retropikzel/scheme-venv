@@ -8,15 +8,16 @@ Tool to create Scheme virtual environments
 
 ## Usage
 
-    scheme-venv chibi r7rs venv
+    scheme-venv chibi venv
 
 Note that scheme-venv does not install snow-chibi, akku or any Scheme
 implementations. You have to install them yourself into your system.
 
-### bin/activate
+First argument is Scheme implementation you want to use, second is path to
+directory. The directory must not exist.
 
-First argument is Scheme, second is RnRS and third is path to directory. The
-directory must not exist.
+
+### bin/activate
 
 After the virtual environment is created you can activate is with:
 
@@ -34,16 +35,20 @@ Install R7RS package from [snow-fort.org](https://snow-fort.org).
 
 Install R6RS package from [akkuscm.org](https://akkuscm.org).
 
+If you want to use R7RS libraries on R6RS you can first install them with
+snow-chibi and then run "akku install".
+
 ### bin/scheme-script
 
-Run Scheme script.
+Run Scheme script. The RnRS is deducted from fiel suffix, .sps or .scm.
 
 ### bin/scheme-compile
 
-Compile Scheme code to executable.
+Compile Scheme code to executable. The RnRS is deducted from fiel suffix,
+.sps or .scm.
 
 
-## Supported impelmentations and notes
+## Supported implementations and notes
 
 ### R6RS
 
