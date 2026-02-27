@@ -44,7 +44,7 @@ Run Scheme script. The RnRS is deducted from fiel suffix, .sps or .scm.
 
 ### bin/scheme-compile
 
-Compile Scheme code to executable. The RnRS is deducted from fiel suffix,
+Compile Scheme code to executable. The RnRS is deducted from file suffix,
 .sps or .scm.
 
 
